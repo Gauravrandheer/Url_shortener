@@ -15,20 +15,26 @@ let db = new sqlite3.Database("./url_shortener", (err) => {
 app.get("/redirect", (req, res) => {
   const code = req.query.code;
 
-  if (code) {
-    res.redirect("https:google.com");
-  } else {
-    res.json({ error: "Missing code parameter" });
+  if (!code) {
+    res.status(400).json({ error: "Missing code parameter" });
   }
+
+  res.status(302).redirect("https://example.com/");
 });
 
 app.post("/shorten", (req, res) => {
-  let long_url = req.body;
-
+  let long_url = req.body.url;
   let short_code = "asdja";
-  res.json({ result: short_code });
+  if (!long_url) {
+    res.status(400).json({ error: "Url is required" });
+  }
+  res.status(200).json({ status: "shortcode stored", url: long_url });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
+  });
+}
+
+module.exports = app;

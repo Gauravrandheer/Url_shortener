@@ -23,3 +23,10 @@ Start the server
   npm index.js
 ```
 
+## Running Tests
+
+To run tests, run the following command
+
+```bash
+  npm run test
+
