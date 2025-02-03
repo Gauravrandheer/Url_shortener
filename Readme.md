@@ -30,3 +30,28 @@ To run tests, run the following command
 ```bash
   npm run test
 
+
+## Load Testing 
+
+#### /shorten api
+
+P50 - 5ms
+
+p90 - 6ms
+
+p95 - 6ms
+
+p99  - 8ms
+
+#### /redirect api
+
+P50 - 1380ms
+
+p90 - 1517ms
+
+p95 - 1517ms
+
+p99  - 1615ms
+
+
+
