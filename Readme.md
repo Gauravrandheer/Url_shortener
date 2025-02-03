@@ -22,15 +22,6 @@ Start the server
 ```bash
   npm index.js
 ```
-
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-  npm run test
-
-
 ## Load Testing 
 
 #### /shorten api
