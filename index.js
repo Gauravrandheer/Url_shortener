@@ -45,8 +45,8 @@ app.post("/shorten", async (req, res) => {
   const count = await prisma.url_shortener.count({
     where: { original_url: long_url },
   });
-  
-  console.log(count)
+
+  console.log(count);
 
   if (count === 1) {
     const row = await prisma.url_shortener.findFirst({
@@ -77,10 +77,30 @@ app.post("/shorten", async (req, res) => {
   }
 });
 
+app.delete("/shorten/:code", async (req, res) => {
+  const code = req.params.code;
+
+  if (!code) {
+    return res.status(400).json({ error: "code parameter is missing" });
+  }
+
+  const row = await prisma.url_shortener.findUnique({
+    where: { short_code: code },
+  });
+
+  if (!row) {
+    return res.status(404).json({ error: "Short code not found" });
+  }
+
+  await prisma.url_shortener.delete({ where: { short_code: code } });
+
+  return res.status(200).json({ status: "Short url deleted succeefully" });
+});
+
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
   });
 }
 
-module.exports = {app,prisma};
+module.exports = { app, prisma };
