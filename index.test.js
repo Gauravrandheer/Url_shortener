@@ -25,7 +25,7 @@ test("Post /short api should return error if url is missing", async () => {
 
 test("Get /redirect api should redirect the url", async () => {
    
-    const res = await request(app).get('/redirect?code=KlQ_X2')
+    const res = await request(app).get('/redirect?code=fpCgQp')
 
     expect(res.statusCode).toBe(302)
     expect(res.headers.location).toBe("https://example.com/")
