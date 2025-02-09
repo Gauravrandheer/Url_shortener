@@ -66,20 +66,26 @@ test("Get /redirect api should redirect the url", async () => {
   expect(res.headers.location).toBe("https://example.com/");
 });
 
-test('Delete /shorten/:code that exist should delete the shorturl ',async()=>{
-    await prisma.url_shortener.create({
-        data: {
-          short_code: "yoDhDo",
-          original_url: "https://example.com/",
-        },
-      });
+test("Delete /shorten/:code that exist should delete the shorturl ", async () => {
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+    },
+  });
 
-      const res = await request(app).delete('/shorten/yoDhDo')
+  const res = await request(app).delete("/shorten/yoDhDo");
 
-      expect(res.statusCode).toBe(200)
-      expect(res.body).toHaveProperty('status','Short url deleted succeefully')
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "Short url deleted succeefully");
+});
 
-})
+test("Delete /shorten/:code will give error if shortcode does not exist ", async () => {
+  const res = await request(app).delete("/shorten/yoDhDo");
+
+  expect(res.statusCode).toBe(404);
+  expect(res.body).toHaveProperty("error", "Short code not found");
+});
 
 test("Get /redirect api should return error if code is missing", async () => {
   const res = await request(app).get("/redirect");
