@@ -72,3 +72,10 @@ test("Get /redirect api should return error if code is missing", async () => {
   expect(res.statusCode).toBe(400);
   expect(res.body).toHaveProperty("error", "Missing code parameter");
 });
+
+test("Get /redirect api should return 404 if short code does not exist", async () => {
+  const res = await request(app).get("/redirect?code=yoDhDo");
+
+  expect(res.statusCode).toBe(404);
+  expect(res.body).toHaveProperty("error", "URL NOT FOUND");
+});
