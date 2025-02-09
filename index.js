@@ -32,7 +32,6 @@ app.get("/redirect", async (req, res) => {
   } else {
     return res.status(404).json({ error: "URL NOT FOUND" });
   }
-
 });
 
 // Shorten
@@ -43,21 +42,39 @@ app.post("/shorten", async (req, res) => {
     return res.status(400).json({ error: "Url is required" });
   }
 
-  const short_code = generateShortCode();
-
-  await prisma.url_shortener.create({
-    data: {
-      short_code: short_code,
-      original_url: long_url,
-    },
+  const count = await prisma.url_shortener.count({
+    where: { original_url: long_url },
   });
-  const my_short_url = `http://localhost:${port}/redirect?code=${short_code}`;
+  
+  console.log(count)
 
-  return res.status(200).json({
-    status: "shortcode stored",
-    short_url: my_short_url,
-  });
+  if (count === 1) {
+    const row = await prisma.url_shortener.findFirst({
+      where: { original_url: long_url },
+    });
 
+    const my_short_url = `http://localhost:${port}/redirect?code=${row.short_code}`;
+
+    return res.status(200).json({
+      status: "shortcode already exists",
+      short_url: my_short_url,
+    });
+  } else {
+    const short_code = generateShortCode();
+
+    await prisma.url_shortener.create({
+      data: {
+        short_code: short_code,
+        original_url: long_url,
+      },
+    });
+    const my_short_url = `http://localhost:${port}/redirect?code=${short_code}`;
+
+    return res.status(200).json({
+      status: "shortcode stored",
+      short_url: my_short_url,
+    });
+  }
 });
 
 if (require.main === module) {
@@ -66,4 +83,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = app;
+module.exports = {app,prisma};
