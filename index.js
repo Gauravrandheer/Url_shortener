@@ -10,6 +10,8 @@ app.use(express.json());
 
 //generateshortcode
 
+const BASE_URL = process.env.BASE_URL || `http://localhost:${port}`;
+
 function generateShortCode() {
   return nanoid(6);
 }
@@ -53,7 +55,7 @@ app.post("/shorten", async (req, res) => {
       where: { original_url: long_url },
     });
 
-    const my_short_url = `http://localhost:${port}/redirect?code=${row.short_code}`;
+    const my_short_url = `${BASE_URL}/redirect?code=${row.short_code}`;
 
     return res.status(200).json({
       status: "shortcode already exists",
@@ -68,7 +70,7 @@ app.post("/shorten", async (req, res) => {
         original_url: long_url,
       },
     });
-    const my_short_url = `http://localhost:${port}/redirect?code=${short_code}`;
+    const my_short_url = `${BASE_URL}/redirect?code=${short_code}`;
 
     return res.status(200).json({
       status: "shortcode stored",
@@ -79,7 +81,7 @@ app.post("/shorten", async (req, res) => {
 
 app.delete("/shorten/:code", async (req, res) => {
   const code = req.params.code;
- 
+
   if (!code) {
     return res.status(400).json({ error: "code parameter is missing" });
   }
