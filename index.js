@@ -4,7 +4,7 @@ const { nanoid } = require("nanoid");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -101,7 +101,7 @@ app.delete("/shorten/:code", async (req, res) => {
 
 if (require.main === module) {
   app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+    console.log(`Server is running at ${BASE_URL}:${port}`);
   });
 }
 
