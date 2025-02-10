@@ -3,6 +3,8 @@
 
  It takes a long URL and turns it into a short link that is easier to share
  
+## Deployed link
+https://url-shortener-oziq.onrender.com/
 
 ## Run Locally
 
@@ -43,6 +45,7 @@ p90 - 1517ms
 p95 - 1517ms
 
 p99  - 1615ms
+
 
 
 
