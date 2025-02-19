@@ -30,6 +30,18 @@ app.get("/redirect", async (req, res) => {
   });
 
   if (row) {
+    await prisma.url_shortener.update({
+      where: {
+        id: row.id,
+      },
+      data: {
+        visit_count: {
+          increment: 1,
+        },
+        last_accessed_at: new Date(),
+      },
+    });
+
     return res.status(302).redirect(row.original_url);
   } else {
     return res.status(404).json({ error: "URL NOT FOUND" });

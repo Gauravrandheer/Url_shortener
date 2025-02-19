@@ -12,6 +12,7 @@ model url_shortener{
    original_url String
    short_code String @unique
    created_at DateTime @default(now())
-
+   visit_count Int @default(0)
+   last_accessed_at DateTime?
 }
 
