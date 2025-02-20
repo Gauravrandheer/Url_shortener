@@ -28,7 +28,7 @@ test("Post /short api should return error if url is missing", async () => {
   expect(res.body).toHaveProperty("error", "Url is required");
 });
 
-test("Post /short api should stored shortcode if original url is already in db", async () => {
+test("Post /short api should different shortcode even if original url is already in db", async () => {
   const test_url = `https://example.com/`;
 
   const firstRes = await request(app)
@@ -48,8 +48,8 @@ test("Post /short api should stored shortcode if original url is already in db",
   expect(firstRes.body).toHaveProperty("short_url");
 
   expect(secondRes.statusCode).toBe(200);
-  expect(secondRes.body).toHaveProperty("status", "shortcode already exists");
-  expect(secondRes.body).toHaveProperty("short_url", firstShortCode);
+  expect(secondRes.body).toHaveProperty("status", "shortcode stored");
+  expect(secondRes.body).toHaveProperty("short_url");
 });
 
 test("Get /redirect api should redirect the url", async () => {

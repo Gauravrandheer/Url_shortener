@@ -56,39 +56,20 @@ app.post("/shorten", async (req, res) => {
     return res.status(400).json({ error: "Url is required" });
   }
 
-  const count = await prisma.url_shortener.count({
-    where: { original_url: long_url },
+  const short_code = generateShortCode();
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: short_code,
+      original_url: long_url,
+    },
   });
+  const my_short_url = `${BASE_URL}/redirect?code=${short_code}`;
 
-  console.log(count);
-
-  if (count === 1) {
-    const row = await prisma.url_shortener.findFirst({
-      where: { original_url: long_url },
-    });
-
-    const my_short_url = `${BASE_URL}/redirect?code=${row.short_code}`;
-
-    return res.status(200).json({
-      status: "shortcode already exists",
-      short_url: my_short_url,
-    });
-  } else {
-    const short_code = generateShortCode();
-
-    await prisma.url_shortener.create({
-      data: {
-        short_code: short_code,
-        original_url: long_url,
-      },
-    });
-    const my_short_url = `${BASE_URL}/redirect?code=${short_code}`;
-
-    return res.status(200).json({
-      status: "shortcode stored",
-      short_url: my_short_url,
-    });
-  }
+  return res.status(200).json({
+    status: "shortcode stored",
+    short_url: my_short_url,
+  });
 });
 
 app.delete("/shorten/:code", async (req, res) => {
