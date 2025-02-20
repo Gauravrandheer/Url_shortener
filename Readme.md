@@ -22,8 +22,31 @@ Install dependencies
 Start the server
 
 ```bash
-  npm index.js
+  node index.js
 ```
+
+
+## API Description
+
+ - /shorten api is used for shortening the long url. 
+ - /redirect with shortcode will redirect user to original long url.
+ - /shorten/:code is used to delete shortcode. 
+
+## Latest Database Schema 
+
+Using Postgres with Prisma ORM
+
+```bash
+  url_shortener{
+   id  Int @id@default(autoincrement())
+   original_url String
+   short_code String @unique
+   created_at DateTime @default(now())
+   visit_count Int @default(0)
+   last_accessed_at DateTime?
+}
+```
+
 ## Load Testing 
 
 #### /shorten api
