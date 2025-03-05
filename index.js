@@ -12,9 +12,15 @@ app.use(express.json());
 
 const BASE_URL = process.env.BASE_URL || `http://localhost:${port}`;
 
+//functions
+
 function generateShortCode() {
   return nanoid(6);
 }
+
+//routers
+
+//user
 
 //redirect
 
@@ -25,8 +31,8 @@ app.get("/redirect", async (req, res) => {
     return res.status(400).json({ error: "Missing code parameter" });
   }
 
-  const row = await prisma.url_shortener.findUnique({
-    where: { short_code: code },
+  const row = await prisma.url_shortener.findFirst({
+    where: { short_code: code, deleted_at: null },
   });
 
   if (row) {
@@ -50,6 +56,22 @@ app.get("/redirect", async (req, res) => {
 
 // Shorten
 app.post("/shorten", async (req, res) => {
+  let api_key = req.header("Authorization");
+
+  if (!api_key) {
+    return res.status(400).json({ error: "API KEY is Required" });
+  }
+
+  let row = await prisma.users.findUnique({
+    where: {
+      api_key: api_key,
+    },
+  });
+
+  if (!row) {
+    return res.status(403).json({ error: "Invalid API KEY" });
+  }
+
   let long_url = req.body.url;
 
   if (!long_url) {
@@ -62,8 +84,10 @@ app.post("/shorten", async (req, res) => {
     data: {
       short_code: short_code,
       original_url: long_url,
+      user_id: row.id,
     },
   });
+
   const my_short_url = `${BASE_URL}/redirect?code=${short_code}`;
 
   return res.status(200).json({
@@ -72,22 +96,46 @@ app.post("/shorten", async (req, res) => {
   });
 });
 
+//Delete
+
 app.delete("/shorten/:code", async (req, res) => {
   const code = req.params.code;
+  const api_key = req.header("Authorization");
 
-  if (!code) {
-    return res.status(400).json({ error: "code parameter is missing" });
+  if (!api_key) {
+    return res.status(400).json({ error: "API KEY is Required" });
   }
 
-  const row = await prisma.url_shortener.findUnique({
-    where: { short_code: code },
+  const user = await prisma.users.findUnique({
+    where: {
+      api_key: api_key,
+    },
+  });
+
+  if (!user) {
+    return res.status(403).json({ error: "Invalid API KEY" });
+  }
+
+  if (!code) {
+    return res.status(400).json({ error: "short code parameter is missing" });
+  }
+
+  const row = await prisma.url_shortener.findFirst({
+    where: { short_code: code, user_id: user.id, deleted_at: null },
   });
 
   if (!row) {
-    return res.status(404).json({ error: "Short code not found" });
+    return res
+      .status(404)
+      .json({ error: "Short URL not found or already deleted" });
   }
 
-  await prisma.url_shortener.delete({ where: { short_code: code } });
+  await prisma.url_shortener.update({
+    where: { short_code: code },
+    data: {
+      deleted_at: new Date(),
+    },
+  });
 
   return res.status(200).json({ status: "Short url deleted succeefully" });
 });

@@ -3,16 +3,27 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url  	    = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model url_shortener{
-   id  Int @id@default(autoincrement())
-   original_url String
-   short_code String @unique
-   created_at DateTime @default(now())
-   visit_count Int @default(0)
-   last_accessed_at DateTime?
+model url_shortener {
+  id               Int       @id @default(autoincrement())
+  original_url     String
+  short_code       String    @unique
+  created_at       DateTime  @default(now())
+  last_accessed_at DateTime?
+  visit_count      Int       @default(0)
+  user_id          Int       @default(1)
+  deleted_at       DateTime?
+  user             users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
+model users {
+  id         Int             @id @default(autoincrement())
+  email      String          @unique
+  name       String?
+  api_key    String          @unique
+  created_at DateTime        @default(now())
+  urls       url_shortener[]
+}
