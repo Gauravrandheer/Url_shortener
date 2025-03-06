@@ -16,6 +16,7 @@ model url_shortener {
   visit_count      Int       @default(0)
   user_id          Int       @default(1)
   deleted_at       DateTime?
+  expired_at       DateTime?
   user             users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 

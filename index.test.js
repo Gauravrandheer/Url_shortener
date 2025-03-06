@@ -7,12 +7,28 @@ beforeEach(async () => {
   await prisma.url_shortener.deleteMany();
 });
 
-test("Post /shorten api should store shortcode with valid api key", async () => {
+test("Post /shorten api should store shortcode with valid api key with expired date", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
+  const expired_date = '2025-03-07'
   const res = await request(app)
     .post("/shorten")
-    .send({ url: test_url })
+    .send({ url: test_url,expired_date:expired_date })
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "shortcode stored");
+  expect(res.body).toHaveProperty('short_url')
+});
+
+test("Post /shorten api should store shortcode with valid api key without expired date", async () => {
+  const test_url = "https://example.com/";
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
+  const expired_date = ''
+  const res = await request(app)
+    .post("/shorten")
+    .send({ url: test_url,expired_date:expired_date })
     .set('Authorization',api_key)
     .set("Accept", "application/json");
 
@@ -85,11 +101,15 @@ test("Post /short api should different shortcode even if original url is already
   expect(secondRes.body).toHaveProperty("short_url");
 });
 
-test("Get /redirect api should redirect the url", async () => {
+test("Get /redirect api should redirect the url with expired_date not passed", async () => {
+ 
+  let expired_date = '2100-03-07'
+
   await prisma.url_shortener.create({
     data: {
       short_code: "yoDhDo",
       original_url: "https://example.com/",
+      expired_at: new Date(expired_date)
     },
   });
 
@@ -97,6 +117,24 @@ test("Get /redirect api should redirect the url", async () => {
 
   expect(res.statusCode).toBe(302);
   expect(res.headers.location).toBe("https://example.com/");
+});
+
+test("Get /redirect api should fail if expired_date is passed", async () => {
+ 
+  let expired_date = '2000-03-07'
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      expired_at: new Date(expired_date)
+    },
+  });
+
+  const res = await request(app).get("/redirect?code=yoDhDo");
+
+  expect(res.statusCode).toBe(404);
+  expect(res.body).toHaveProperty("error","short_code is expired");
 });
 
 

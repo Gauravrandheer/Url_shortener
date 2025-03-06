@@ -36,6 +36,11 @@ app.get("/redirect", async (req, res) => {
   });
 
   if (row) {
+    const isExpired = row.expired_at ? new Date() > new Date(row.expired_at) : false;
+
+   if(isExpired){
+    return res.status(404).json({error:"short_code is expired"});
+   }
     await prisma.url_shortener.update({
       where: {
         id: row.id,
@@ -54,7 +59,7 @@ app.get("/redirect", async (req, res) => {
   }
 });
 
-// Shorten
+// Shorten YYYY-MM-DD
 app.post("/shorten", async (req, res) => {
   let api_key = req.header("Authorization");
 
@@ -73,6 +78,8 @@ app.post("/shorten", async (req, res) => {
   }
 
   let long_url = req.body.url;
+  let expired_date = req.body.expired_date
+
 
   if (!long_url) {
     return res.status(400).json({ error: "Url is required" });
@@ -80,13 +87,31 @@ app.post("/shorten", async (req, res) => {
 
   const short_code = generateShortCode();
 
-  await prisma.url_shortener.create({
-    data: {
-      short_code: short_code,
-      original_url: long_url,
-      user_id: row.id,
-    },
-  });
+  if(!expired_date){
+    await prisma.url_shortener.create({
+      data: {
+        short_code: short_code,
+        original_url: long_url,
+        user_id: row.id,
+      },
+    });
+  
+  }else{
+
+    let expiredDate = new Date(expired_date)
+
+    await prisma.url_shortener.create({
+      data: {
+        short_code: short_code,
+        original_url: long_url,
+        user_id: row.id,
+        expired_at:expiredDate
+      },
+    });
+
+  }
+
+  
 
   const my_short_url = `${BASE_URL}/redirect?code=${short_code}`;
 
