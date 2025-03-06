@@ -7,7 +7,7 @@ beforeEach(async () => {
   await prisma.url_shortener.deleteMany();
 });
 
-test("Post /shorten api should store shortcode with valid api key with expired date", async () => {
+test("Post /shorten api should store generated shortcode with valid api key with expired date", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
   const expired_date = '2025-03-07'
@@ -22,6 +22,21 @@ test("Post /shorten api should store shortcode with valid api key with expired d
   expect(res.body).toHaveProperty('short_url')
 });
 
+test("Post /shorten api should store cutom shortcode with valid api key with expired date", async () => {
+  const test_url = "https://example.com/";
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
+  const expired_date = '2025-03-07'
+  const custom_code = 'awesome-link'
+  const res = await request(app)
+    .post("/shorten")
+    .send({ url: test_url,expired_date:expired_date,custom_code:custom_code })
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "shortcode stored");
+  expect(res.body).toHaveProperty('short_url')
+});
 test("Post /shorten api should store shortcode with valid api key without expired date", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"

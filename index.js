@@ -79,6 +79,7 @@ app.post("/shorten", async (req, res) => {
 
   let long_url = req.body.url;
   let expired_date = req.body.expired_date
+  let custom_code = req.body.custom_code
 
 
   if (!long_url) {
@@ -86,11 +87,12 @@ app.post("/shorten", async (req, res) => {
   }
 
   const short_code = generateShortCode();
-
+  const our_short_code =  custom_code?.trim().length>0?custom_code.trim():short_code
   if(!expired_date){
+
     await prisma.url_shortener.create({
       data: {
-        short_code: short_code,
+        short_code: our_short_code,
         original_url: long_url,
         user_id: row.id,
       },
@@ -102,7 +104,7 @@ app.post("/shorten", async (req, res) => {
 
     await prisma.url_shortener.create({
       data: {
-        short_code: short_code,
+        short_code: our_short_code,
         original_url: long_url,
         user_id: row.id,
         expired_at:expiredDate
@@ -113,7 +115,7 @@ app.post("/shorten", async (req, res) => {
 
   
 
-  const my_short_url = `${BASE_URL}/redirect?code=${short_code}`;
+  const my_short_url = `${BASE_URL}/redirect?code=${our_short_code}`;
 
   return res.status(200).json({
     status: "shortcode stored",
