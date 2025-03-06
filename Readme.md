@@ -24,7 +24,11 @@ Start the server
 ```bash
   node index.js
 ```
+## Testing with jest
 
+```bash
+ npm run test
+```
 
 ## API Description
 
@@ -44,6 +48,10 @@ Using Postgres with Prisma ORM
    created_at DateTime @default(now())
    visit_count Int @default(0)
    last_accessed_at DateTime?
+   user_id  Int @default(1)
+   deleted_at DateTime?
+   expired_at DateTime?
+   user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 ```
 
