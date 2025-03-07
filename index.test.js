@@ -37,6 +37,7 @@ test("Post /shorten api should store cutom shortcode with valid api key with exp
   expect(res.body).toHaveProperty("status", "shortcode stored");
   expect(res.body).toHaveProperty('short_url')
 });
+
 test("Post /shorten api should store shortcode with valid api key without expired date", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
@@ -202,3 +203,100 @@ test("Delete /shorten/:code will give error if api key is invalid", async () => 
   expect(res.body).toHaveProperty("error", "Invalid API KEY");
 });
 
+test('/shorten-bulk should shorten multiple url with valid api key and valid urls in array',async()=>{
+
+  const test_urls =  [
+    "https://gaurav.com",
+    "https://github.com",
+    "https://example.com"
+  ];
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
+ 
+  const res = await request(app)
+    .post("/shorten-bulk")
+    .send({ urls: test_urls})
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("Success");
+  expect(res.body).toHaveProperty("Failure");
+
+  expect(res.body.Success.length).toBe(test_urls.length)
+  expect(res.body.Failure.length).toBe(0)
+})
+
+test('/shorten-bulk should fall without api key',async()=>{
+
+  const test_urls =  [
+    "https://gaurav.com",
+    "https://github.com",
+    "https://example.com"
+  ];
+ 
+  const res = await request(app)
+    .post("/shorten-bulk")
+    .send({ urls: test_urls})
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(400);
+  expect(res.body).toHaveProperty("error","API Key is required");
+})
+test('/shorten-bulk should fall  without valid api key',async()=>{
+
+  const test_urls =  [
+    "https://gaurav.com",
+    "https://github.com",
+    "https://example.com"
+  ];
+  const api_key = "asdas"
+ 
+  const res = await request(app)
+    .post("/shorten-bulk")
+    .send({ urls: test_urls})
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(401);
+  expect(res.body).toHaveProperty("error","Invalid API Key");
+})
+
+test('/shorten-bulk should fall where urls array length is 0 ',async()=>{
+
+  const test_urls =  [];
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
+ 
+  const res = await request(app)
+    .post("/shorten-bulk")
+    .send({ urls: test_urls})
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(400);
+  expect(res.body).toHaveProperty("error","At least one valid URL is required, and URLs input must be an array");
+  
+})
+
+test('/shorten-bulk should shorten multiple url with valid url and error for invalid urls',async()=>{
+
+  const test_urls =  [
+    "https://gaurav.com",
+    "https://github.com",
+    "",
+    "adsfasd"
+  ];
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc"
+ 
+  const res = await request(app)
+    .post("/shorten-bulk")
+    .send({ urls: test_urls})
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("Success");
+  expect(res.body).toHaveProperty("Failure");
+
+  expect(res.body.Success.length).toBe(2)
+  expect(res.body.Failure.length).toBe(2)
+})

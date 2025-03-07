@@ -34,7 +34,8 @@ Start the server
 
  - /shorten api is used for shortening the long url. 
  - /redirect with shortcode will redirect user to original long url.
- - /shorten/:code is used to delete shortcode. 
+ - /shorten/:code is used to delete shortcode.
+ - /shorten-bulk is used for shortening multiple url at the same time for the user. 
 
 ## Latest Database Schema 
 

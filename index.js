@@ -18,6 +18,14 @@ function generateShortCode() {
   return nanoid(6);
 }
 
+function isValidUrl(url) {
+  try {
+    const parsedUrl = new URL(url); //valid url
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  } catch (_) {
+    return false;
+  }
+}
 //routers
 
 //user
@@ -36,11 +44,13 @@ app.get("/redirect", async (req, res) => {
   });
 
   if (row) {
-    const isExpired = row.expired_at ? new Date() > new Date(row.expired_at) : false;
+    const isExpired = row.expired_at
+      ? new Date() > new Date(row.expired_at)
+      : false;
 
-   if(isExpired){
-    return res.status(404).json({error:"short_code is expired"});
-   }
+    if (isExpired) {
+      return res.status(404).json({ error: "short_code is expired" });
+    }
     await prisma.url_shortener.update({
       where: {
         id: row.id,
@@ -78,18 +88,17 @@ app.post("/shorten", async (req, res) => {
   }
 
   let long_url = req.body.url;
-  let expired_date = req.body.expired_date
-  let custom_code = req.body.custom_code
-
+  let expired_date = req.body.expired_date;
+  let custom_code = req.body.custom_code;
 
   if (!long_url) {
     return res.status(400).json({ error: "Url is required" });
   }
 
   const short_code = generateShortCode();
-  const our_short_code =  custom_code?.trim().length>0?custom_code.trim():short_code
-  if(!expired_date){
-
+  const our_short_code =
+    custom_code?.trim().length > 0 ? custom_code.trim() : short_code;
+  if (!expired_date) {
     await prisma.url_shortener.create({
       data: {
         short_code: our_short_code,
@@ -97,23 +106,18 @@ app.post("/shorten", async (req, res) => {
         user_id: row.id,
       },
     });
-  
-  }else{
-
-    let expiredDate = new Date(expired_date)
+  } else {
+    let expiredDate = new Date(expired_date);
 
     await prisma.url_shortener.create({
       data: {
         short_code: our_short_code,
         original_url: long_url,
         user_id: row.id,
-        expired_at:expiredDate
+        expired_at: expiredDate,
       },
     });
-
   }
-
-  
 
   const my_short_url = `${BASE_URL}/redirect?code=${our_short_code}`;
 
@@ -121,6 +125,61 @@ app.post("/shorten", async (req, res) => {
     status: "shortcode stored",
     short_url: my_short_url,
   });
+});
+
+
+app.post("/shorten-bulk", async (req, res) => {
+  const api_key = req.header("Authorization");
+  const urls = req.body.urls;
+
+  if (!api_key) {
+    return res.status(400).json({ error: "API Key is required" });
+  }
+
+  const user = await prisma.users.findUnique({
+    where: {
+      api_key: api_key
+    },
+  });
+
+  if (!user) {
+    return res.status(401).json({ error: "Invalid API Key" });
+  }
+
+  if (!Array.isArray(urls) || urls.length === 0) {
+    return res.status(400).json({
+      error: "At least one valid URL is required, and URLs input must be an array"
+    });
+  }
+
+  const results = await Promise.all(
+    urls.map(async (url) => {
+      try {
+        if(!url || typeof url !=='string' || !isValidUrl(url)){
+          return { original_url: url, error: "Invalid url format" }
+        }
+        const short_code = generateShortCode();
+        const newData = await prisma.url_shortener.create({
+          data: {
+            short_code: short_code,
+            original_url: url,
+            user_id: user.id,
+          },
+        });
+
+        return { original_url: url, short_code: newData.short_code };
+      } catch (error) {
+        return { original_url: url, error: error.message };
+      }
+    })
+  );
+
+  return res.status(200).json({
+    Success: results.filter((r) => !r.error),
+    Failure: results.filter((r) => r.error),
+  });
+
+
 });
 
 //Delete
