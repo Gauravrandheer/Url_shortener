@@ -127,7 +127,6 @@ app.post("/shorten", async (req, res) => {
   });
 });
 
-
 app.post("/shorten-bulk", async (req, res) => {
   const api_key = req.header("Authorization");
   const urls = req.body.urls;
@@ -138,7 +137,7 @@ app.post("/shorten-bulk", async (req, res) => {
 
   const user = await prisma.users.findUnique({
     where: {
-      api_key: api_key
+      api_key: api_key,
     },
   });
 
@@ -146,21 +145,24 @@ app.post("/shorten-bulk", async (req, res) => {
     return res.status(401).json({ error: "Invalid API Key" });
   }
 
-  if(!user.tier || user.tier !=="enterprise"){
-    return res.status(403).json({error:"Bulk shortening is only available for enterprise users"})
+  if (!user.tier || user.tier !== "enterprise") {
+    return res.status(403).json({
+      error: "Bulk shortening is only available for enterprise users",
+    });
   }
 
   if (!Array.isArray(urls) || urls.length === 0) {
     return res.status(400).json({
-      error: "At least one valid URL is required, and URLs input must be an array"
+      error:
+        "At least one valid URL is required, and URLs input must be an array",
     });
   }
 
   const results = await Promise.all(
     urls.map(async (url) => {
       try {
-        if(!url || typeof url !=='string' || !isValidUrl(url)){
-          return { original_url: url, error: "Invalid url format" }
+        if (!url || typeof url !== "string" || !isValidUrl(url)) {
+          return { original_url: url, error: "Invalid url format" };
         }
         const short_code = generateShortCode();
         const newData = await prisma.url_shortener.create({
@@ -182,8 +184,77 @@ app.post("/shorten-bulk", async (req, res) => {
     Success: results.filter((r) => !r.error),
     Failure: results.filter((r) => r.error),
   });
+});
 
+//patch
 
+app.patch("/shorten/edit", async (req, res) => {
+  try {
+    const api_key = req.header("Authorization");
+    const short_code = req.body.short_code;
+    const status = req.body.status.toLowerCase();
+  
+    if (!api_key) {
+      return res.status(400).json({ error: "API KEY is Required" });
+    }
+  
+    const user = await prisma.users.findUnique({
+      where: {
+        api_key: api_key,
+      },
+    });
+  
+    if (!user) {
+      return res.status(401).json({ error: "Invalid API KEY" });
+    }
+  
+    if (!short_code) {
+      return res.status(400).json({ error: "short code parameter is missing" });
+    }
+  
+    if (!status) {
+      return res.status(400).json({ error: "status parameter is missing" });
+    }
+  
+    let expiredDate = "";
+  
+    if (status == "active") {
+      expiredDate = null;
+    } else if ((status == "inactive")) {
+      expiredDate = new Date();
+    } else {
+      return res.status(400).json({ error: "Invalid status parameter" });
+    }
+  
+    const row = await prisma.url_shortener.findUnique({
+      where: {
+        short_code: short_code,
+        user_id: user.id,
+        deleted_at: null,
+      },
+    });
+  
+    if (!row) {
+      return res
+        .status(404)
+        .json({ error: "Shortcode not found for user or does not belong to the user" });
+    }
+  
+    await prisma.url_shortener.update({
+      where: {
+        short_code: short_code,
+        user_id: user.id,
+        deleted_at: null,
+      },
+      data: {
+        expired_at: expiredDate,
+      },
+    });
+  
+    return res.status(200).json({ status: "status updated succesfully" });
+  } catch (error) {
+    return res.status(500).json({error:"Internal server error"})
+  }
 });
 
 //Delete
