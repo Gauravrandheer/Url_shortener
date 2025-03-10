@@ -8,13 +8,29 @@ beforeEach(async () => {
   await prisma.url_shortener.deleteMany();
 });
 
-test("Post /shorten api should store generated shortcode with valid api key with expired date", async () => {
+test("Post /shorten api should store generated shortcode with valid api key with expired date with no password", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
   const expired_date = "2025-03-07";
   const res = await request(app)
     .post("/shorten")
     .send({ url: test_url, expired_date: expired_date })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "shortcode stored");
+  expect(res.body).toHaveProperty("short_url");
+});
+
+test("Post /shorten api should store generated shortcode with valid api key with expired date with  password", async () => {
+  const test_url = "https://example.com/";
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+  const expired_date = "2025-03-07";
+  const password = "123456"
+  const res = await request(app)
+    .post("/shorten")
+    .send({ url: test_url, expired_date: expired_date,password:password })
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
@@ -121,7 +137,7 @@ test("Post /short api should different shortcode even if original url is already
   expect(secondRes.body).toHaveProperty("short_url");
 });
 
-test("Get /redirect api should redirect the url with expired_date not passed", async () => {
+test("Get /redirect api should redirect the url with expired_date not passed without password", async () => {
   let expired_date = "2100-03-07";
 
   await prisma.url_shortener.create({
@@ -136,6 +152,42 @@ test("Get /redirect api should redirect the url with expired_date not passed", a
 
   expect(res.statusCode).toBe(302);
   expect(res.headers.location).toBe("https://example.com/");
+});
+
+test("Get /redirect api should redirect the url with expired_date not passed with password", async () => {
+  let expired_date = "2100-03-07";
+  
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      expired_at: new Date(expired_date),
+      password:"123456"
+    },
+  });
+
+  const res = await request(app).get("/redirect?code=yoDhDo&pass=123456");
+
+  expect(res.statusCode).toBe(302);
+  expect(res.headers.location).toBe("https://example.com/");
+});
+
+test("Get /redirect api should fall if password is not correct", async () => {
+  let expired_date = "2100-03-07";
+  
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      expired_at: new Date(expired_date),
+      password:"123456"
+    },
+  });
+
+  const res = await request(app).get("/redirect?code=yoDhDo&pass=12345");
+
+  expect(res.statusCode).toBe(403);
+  expect(res.body).toHaveProperty("error","This shortcode is password protected.Please provide valid password");
 });
 
 test("Get /redirect api should fail if expired_date is passed", async () => {

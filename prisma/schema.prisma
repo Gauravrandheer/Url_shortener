@@ -17,6 +17,7 @@ model url_shortener {
   user_id          Int       @default(1)
   deleted_at       DateTime?
   expired_at       DateTime?
+  password         String?
   user             users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 

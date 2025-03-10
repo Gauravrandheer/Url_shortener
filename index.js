@@ -34,6 +34,7 @@ function isValidUrl(url) {
 
 app.get("/redirect", async (req, res) => {
   const code = req.query.code;
+  const password = req?.query.pass
 
   if (!code) {
     return res.status(400).json({ error: "Missing code parameter" });
@@ -42,6 +43,10 @@ app.get("/redirect", async (req, res) => {
   const row = await prisma.url_shortener.findFirst({
     where: { short_code: code, deleted_at: null },
   });
+
+  if(row && row.password && row.password!==password){
+    return res.status(403).json({error:"This shortcode is password protected.Please provide valid password"})
+  }
 
   if (row) {
     const isExpired = row.expired_at
@@ -88,12 +93,15 @@ app.post("/shorten", async (req, res) => {
   }
 
   let long_url = req.body.url;
+  let password= req.body.password
   let expired_date = req.body.expired_date;
   let custom_code = req.body.custom_code;
 
   if (!long_url) {
     return res.status(400).json({ error: "Url is required" });
   }
+
+  let finalpassword = password?password:null
 
   const short_code = generateShortCode();
   const our_short_code =
@@ -104,6 +112,7 @@ app.post("/shorten", async (req, res) => {
         short_code: our_short_code,
         original_url: long_url,
         user_id: row.id,
+        password:finalpassword
       },
     });
   } else {
@@ -115,6 +124,7 @@ app.post("/shorten", async (req, res) => {
         original_url: long_url,
         user_id: row.id,
         expired_at: expiredDate,
+        password:finalpassword
       },
     });
   }
