@@ -34,7 +34,7 @@ function isValidUrl(url) {
 
 app.get("/redirect", async (req, res) => {
   const code = req.query.code;
-  const password = req?.query.pass
+  const password = req?.query.pass;
 
   if (!code) {
     return res.status(400).json({ error: "Missing code parameter" });
@@ -44,8 +44,13 @@ app.get("/redirect", async (req, res) => {
     where: { short_code: code, deleted_at: null },
   });
 
-  if(row && row.password && row.password!==password){
-    return res.status(403).json({error:"This shortcode is password protected.Please provide valid password"})
+  if (row && row.password && row.password !== password) {
+    return res
+      .status(403)
+      .json({
+        error:
+          "This shortcode is password protected.Please provide valid password",
+      });
   }
 
   if (row) {
@@ -93,7 +98,7 @@ app.post("/shorten", async (req, res) => {
   }
 
   let long_url = req.body.url;
-  let password= req.body.password
+  let password = req.body.password;
   let expired_date = req.body.expired_date;
   let custom_code = req.body.custom_code;
 
@@ -101,7 +106,7 @@ app.post("/shorten", async (req, res) => {
     return res.status(400).json({ error: "Url is required" });
   }
 
-  let finalpassword = password?password:null
+  let finalpassword = password ? password : null;
 
   const short_code = generateShortCode();
   const our_short_code =
@@ -112,7 +117,7 @@ app.post("/shorten", async (req, res) => {
         short_code: our_short_code,
         original_url: long_url,
         user_id: row.id,
-        password:finalpassword
+        password: finalpassword,
       },
     });
   } else {
@@ -124,7 +129,7 @@ app.post("/shorten", async (req, res) => {
         original_url: long_url,
         user_id: row.id,
         expired_at: expiredDate,
-        password:finalpassword
+        password: finalpassword,
       },
     });
   }
@@ -203,39 +208,41 @@ app.patch("/shorten/edit", async (req, res) => {
     const api_key = req.header("Authorization");
     const short_code = req.body.short_code;
     const status = req.body.status.toLowerCase();
-  
+    const old_password = req.body.old_password;
+    const new_password = req.body.new_password;
+
     if (!api_key) {
       return res.status(400).json({ error: "API KEY is Required" });
     }
-  
+
     const user = await prisma.users.findUnique({
       where: {
         api_key: api_key,
       },
     });
-  
+
     if (!user) {
       return res.status(401).json({ error: "Invalid API KEY" });
     }
-  
+
     if (!short_code) {
       return res.status(400).json({ error: "short code parameter is missing" });
     }
-  
+
     if (!status) {
       return res.status(400).json({ error: "status parameter is missing" });
     }
-  
+
     let expiredDate = "";
-  
+
     if (status == "active") {
       expiredDate = null;
-    } else if ((status == "inactive")) {
+    } else if (status == "inactive") {
       expiredDate = new Date();
     } else {
       return res.status(400).json({ error: "Invalid status parameter" });
     }
-  
+
     const row = await prisma.url_shortener.findUnique({
       where: {
         short_code: short_code,
@@ -243,27 +250,44 @@ app.patch("/shorten/edit", async (req, res) => {
         deleted_at: null,
       },
     });
-  
+
+    
+
     if (!row) {
       return res
         .status(404)
-        .json({ error: "Shortcode not found for user or does not belong to the user" });
+        .json({
+          error: "Shortcode not found for user or does not belong to the user",
+        });
     }
-  
+
+    if (row.password !== null) {
+      if (!old_password || row.password !== old_password) {
+        return res.status(403).json({
+          error: "This shortcode is password protected. Please provide a valid password.",
+        });
+      }
+    }
+
+ 
+
+    const newdata = {
+      expired_at: expiredDate,
+      password: new_password || row.password,
+    };
+
     await prisma.url_shortener.update({
       where: {
         short_code: short_code,
         user_id: user.id,
         deleted_at: null,
       },
-      data: {
-        expired_at: expiredDate,
-      },
+      data: newdata,
     });
-  
+
     return res.status(200).json({ status: "status updated succesfully" });
   } catch (error) {
-    return res.status(500).json({error:"Internal server error"})
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

@@ -374,7 +374,7 @@ test("/shorten-bulk should shorten multiple url with valid url and error for inv
   expect(res.body.Failure.length).toBe(2);
 });
 
-test("/shorten/edit api should give succees with valid api key with valid shortcode and status", async () => {
+test("/shorten/edit api should give succees with valid api key with valid shortcode and status and no password", async () => {
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
 
   await prisma.url_shortener.create({
@@ -388,6 +388,51 @@ test("/shorten/edit api should give succees with valid api key with valid shortc
   const res = await request(app)
     .patch("/shorten/edit")
     .send({ short_code: "yoDhDo", status: "active" })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "status updated succesfully");
+});
+
+test("/shorten/edit api should give succees with valid api key with valid shortcode and status with also change password ", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      user_id: 1,
+      password:'12345'
+    },
+  });
+
+  const res = await request(app)
+    .patch("/shorten/edit")
+    .send({ short_code: "yoDhDo", status: "active",old_password:'12345',new_password:"1234556" })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "status updated succesfully");
+});
+
+
+test("/shorten/edit api should also give success when only valid old password is there ", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      user_id: 1,
+      password:"12344"
+    },
+  });
+
+  const res = await request(app)
+    .patch("/shorten/edit")
+    .send({ short_code: "yoDhDo", status: "active",old_password:"12344"})
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
