@@ -27,10 +27,10 @@ test("Post /shorten api should store generated shortcode with valid api key with
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
   const expired_date = "2025-03-07";
-  const password = "123456"
+  const password = "123456";
   const res = await request(app)
     .post("/shorten")
-    .send({ url: test_url, expired_date: expired_date,password:password })
+    .send({ url: test_url, expired_date: expired_date, password: password })
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
@@ -156,13 +156,13 @@ test("Get /redirect api should redirect the url with expired_date not passed wit
 
 test("Get /redirect api should redirect the url with expired_date not passed with password", async () => {
   let expired_date = "2100-03-07";
-  
+
   await prisma.url_shortener.create({
     data: {
       short_code: "yoDhDo",
       original_url: "https://example.com/",
       expired_at: new Date(expired_date),
-      password:"123456"
+      password: "123456",
     },
   });
 
@@ -174,20 +174,23 @@ test("Get /redirect api should redirect the url with expired_date not passed wit
 
 test("Get /redirect api should fall if password is not correct", async () => {
   let expired_date = "2100-03-07";
-  
+
   await prisma.url_shortener.create({
     data: {
       short_code: "yoDhDo",
       original_url: "https://example.com/",
       expired_at: new Date(expired_date),
-      password:"123456"
+      password: "123456",
     },
   });
 
   const res = await request(app).get("/redirect?code=yoDhDo&pass=12345");
 
   expect(res.statusCode).toBe(403);
-  expect(res.body).toHaveProperty("error","This shortcode is password protected.Please provide valid password");
+  expect(res.body).toHaveProperty(
+    "error",
+    "This shortcode is password protected.Please provide valid password"
+  );
 });
 
 test("Get /redirect api should fail if expired_date is passed", async () => {
@@ -403,20 +406,24 @@ test("/shorten/edit api should give succees with valid api key with valid shortc
       short_code: "yoDhDo",
       original_url: "https://example.com/",
       user_id: 1,
-      password:'12345'
+      password: "12345",
     },
   });
 
   const res = await request(app)
     .patch("/shorten/edit")
-    .send({ short_code: "yoDhDo", status: "active",old_password:'12345',new_password:"1234556" })
+    .send({
+      short_code: "yoDhDo",
+      status: "active",
+      old_password: "12345",
+      new_password: "1234556",
+    })
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
   expect(res.statusCode).toBe(200);
   expect(res.body).toHaveProperty("status", "status updated succesfully");
 });
-
 
 test("/shorten/edit api should also give success when only valid old password is there ", async () => {
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
@@ -426,13 +433,13 @@ test("/shorten/edit api should also give success when only valid old password is
       short_code: "yoDhDo",
       original_url: "https://example.com/",
       user_id: 1,
-      password:"12344"
+      password: "12344",
     },
   });
 
   const res = await request(app)
     .patch("/shorten/edit")
-    .send({ short_code: "yoDhDo", status: "active",old_password:"12344"})
+    .send({ short_code: "yoDhDo", status: "active", old_password: "12344" })
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
@@ -565,3 +572,43 @@ test("/shorten/edit should give fail if Shortcode not found for user or does not
     "Shortcode not found for user or does not belong to the user"
   );
 });
+
+test("/user/urls should return all URLs for a user", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  await prisma.url_shortener.createMany({
+    data: [
+      { short_code: "abc123", original_url: "https://example.com", user_id: 1 },
+      { short_code: "xyz456", original_url: "https://google.com", user_id: 1 },
+    ],
+  });
+
+  const res = await request(app)
+    .get("/user/urls")
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body.urls).toHaveLength(2);
+});
+
+test("/user/urls should fall with no API key", async () => {
+  const res = await request(app)
+    .get("/user/urls")
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(400);
+  expect(res.body).toHaveProperty("error", "API KEY is Required");
+});
+
+test("/user/urls should fall with invalid API key", async () => {
+  const res = await request(app)
+    .get("/user/urls")
+    .set("Authorization", "invalid_api_key")
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(401);
+  expect(res.body).toHaveProperty("error", "Invalid API KEY");
+});
+
+

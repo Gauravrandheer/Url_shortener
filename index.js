@@ -45,12 +45,10 @@ app.get("/redirect", async (req, res) => {
   });
 
   if (row && row.password && row.password !== password) {
-    return res
-      .status(403)
-      .json({
-        error:
-          "This shortcode is password protected.Please provide valid password",
-      });
+    return res.status(403).json({
+      error:
+        "This shortcode is password protected.Please provide valid password",
+    });
   }
 
   if (row) {
@@ -251,25 +249,20 @@ app.patch("/shorten/edit", async (req, res) => {
       },
     });
 
-    
-
     if (!row) {
-      return res
-        .status(404)
-        .json({
-          error: "Shortcode not found for user or does not belong to the user",
-        });
+      return res.status(404).json({
+        error: "Shortcode not found for user or does not belong to the user",
+      });
     }
 
     if (row.password !== null) {
       if (!old_password || row.password !== old_password) {
         return res.status(403).json({
-          error: "This shortcode is password protected. Please provide a valid password.",
+          error:
+            "This shortcode is password protected. Please provide a valid password.",
         });
       }
     }
-
- 
 
     const newdata = {
       expired_at: expiredDate,
@@ -335,6 +328,33 @@ app.delete("/shorten/:code", async (req, res) => {
   return res.status(200).json({ status: "Short url deleted succeefully" });
 });
 
+//list of users
+
+app.get("/user/urls", async (req, res) => {
+  try {
+    const api_key = req.header("Authorization");
+
+    if (!api_key) {
+      return res.status(400).json({ error: "API KEY is Required" });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { api_key },
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid API KEY" });
+    }
+
+    const urls = await prisma.url_shortener.findMany({
+      where: { user_id: user.id, deleted_at: null },
+    });
+
+    return res.status(200).json({ urls });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running at ${BASE_URL}:${port}`);
