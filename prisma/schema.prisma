@@ -20,11 +20,17 @@ model url_shortener {
   user             users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
+enum Tier {
+  hobby
+  enterprise
+}
+
 model users {
   id         Int             @id @default(autoincrement())
   email      String          @unique
   name       String?
   api_key    String          @unique
   created_at DateTime        @default(now())
+  tier       Tier            @default(hobby)
   urls       url_shortener[]
 }

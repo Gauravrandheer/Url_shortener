@@ -203,7 +203,7 @@ test("Delete /shorten/:code will give error if api key is invalid", async () => 
   expect(res.body).toHaveProperty("error", "Invalid API KEY");
 });
 
-test('/shorten-bulk should shorten multiple url with valid api key and valid urls in array',async()=>{
+test('/shorten-bulk should shorten multiple url with valid api key and valid urls in array with enterprise teir ',async()=>{
 
   const test_urls =  [
     "https://gaurav.com",
@@ -224,6 +224,26 @@ test('/shorten-bulk should shorten multiple url with valid api key and valid url
 
   expect(res.body.Success.length).toBe(test_urls.length)
   expect(res.body.Failure.length).toBe(0)
+})
+
+test('/shorten-bulk should fail without enterprise teir ',async()=>{
+
+  const test_urls =  [
+    "https://gaurav.com",
+    "https://github.com",
+    "https://example.com"
+  ];
+  const api_key = "e1a94c6f5d2b47c2ab89de3f0a1e7653"
+ 
+  const res = await request(app)
+    .post("/shorten-bulk")
+    .send({ urls: test_urls})
+    .set('Authorization',api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(403);
+  expect(res.body).toHaveProperty("error","Bulk shortening is only available for enterprise users");
+
 })
 
 test('/shorten-bulk should fall without api key',async()=>{

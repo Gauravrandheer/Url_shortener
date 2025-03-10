@@ -146,6 +146,10 @@ app.post("/shorten-bulk", async (req, res) => {
     return res.status(401).json({ error: "Invalid API Key" });
   }
 
+  if(!user.tier || user.tier !=="enterprise"){
+    return res.status(403).json({error:"Bulk shortening is only available for enterprise users"})
+  }
+
   if (!Array.isArray(urls) || urls.length === 0) {
     return res.status(400).json({
       error: "At least one valid URL is required, and URLs input must be an array"
