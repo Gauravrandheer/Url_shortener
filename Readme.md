@@ -36,6 +36,9 @@ Start the server
  - /redirect with shortcode will redirect user to original long url.
  - /shorten/:code is used to delete shortcode.
  - /shorten-bulk is used for shortening multiple url at the same time for the user. 
+ - /shorten/edit is used active/inactive short_codes.
+ - /health is used for checking that everything is running smoothly.
+ - /user/urls is used for showing a list of all URLs of a user.
 
 ## Latest Database Schema 
 
@@ -52,6 +55,7 @@ Using Postgres with Prisma ORM
    user_id  Int @default(1)
    deleted_at DateTime?
    expired_at DateTime?
+   password   String?
    user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 ```
