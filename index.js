@@ -2,6 +2,7 @@ const express = require("express");
 const { nanoid } = require("nanoid");
 // const sqlite3 = require("sqlite3").verbose();
 const { PrismaClient } = require("@prisma/client");
+const { status } = require("express/lib/response");
 const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 3000;
@@ -355,6 +356,23 @@ app.get("/user/urls", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+//Health
+
+app.get("/health", async (req, res) => {
+  try {
+    await prisma.$queryRaw`Select 1`;
+
+    return res.status(200).json({ status: "healthy", database: "connected" });
+  } catch (error) {
+    return res.status(500).json({
+      status: "unhealthy",
+      database: "databse connection failed",
+      error: error.message,
+    });
+  }
+});
+
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running at ${BASE_URL}:${port}`);
