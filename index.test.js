@@ -94,7 +94,7 @@ test("Post /shorten api should fail with invalid api key", async () => {
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
-  expect(res.statusCode).toBe(403);
+  expect(res.statusCode).toBe(401);
   expect(res.body).toHaveProperty("error", "Invalid API KEY");
 });
 
@@ -262,7 +262,7 @@ test("Delete /shorten/:code will give error if api key is invalid", async () => 
     .delete("/shorten/yoDhDo")
     .set("Authorization", api_key);
 
-  expect(res.statusCode).toBe(403);
+  expect(res.statusCode).toBe(401);
   expect(res.body).toHaveProperty("error", "Invalid API KEY");
 });
 
@@ -322,7 +322,7 @@ test("/shorten-bulk should fall without api key", async () => {
     .set("Accept", "application/json");
 
   expect(res.statusCode).toBe(400);
-  expect(res.body).toHaveProperty("error", "API Key is required");
+  expect(res.body).toHaveProperty("error", "API KEY is Required");
 });
 test("/shorten-bulk should fall  without valid api key", async () => {
   const test_urls = [
@@ -339,7 +339,7 @@ test("/shorten-bulk should fall  without valid api key", async () => {
     .set("Accept", "application/json");
 
   expect(res.statusCode).toBe(401);
-  expect(res.body).toHaveProperty("error", "Invalid API Key");
+  expect(res.body).toHaveProperty("error", "Invalid API KEY");
 });
 
 test("/shorten-bulk should fall where urls array length is 0 ", async () => {

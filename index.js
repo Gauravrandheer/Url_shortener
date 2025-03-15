@@ -24,6 +24,28 @@ const logMiddleware = (req, res, next) => {
   next();
 };
 
+const isValidApiKey = async (req, res, next) => {
+  let api_key = req.header("Authorization");
+
+  if (!api_key) {
+    return res.status(400).json({ error: "API KEY is Required" });
+  }
+
+  let user = await prisma.users.findUnique({
+    where: {
+      api_key: api_key,
+    },
+  });
+
+  if (!user) {
+    return res.status(401).json({ error: "Invalid API KEY" });
+  }
+
+  req.user = user;
+
+  next();
+};
+
 //middleware used
 app.use(express.json());
 // app.use(logMiddleware);
@@ -97,23 +119,8 @@ app.get("/redirect", logMiddleware, async (req, res) => {
 });
 
 // Shorten YYYY-MM-DD
-app.post("/shorten",logMiddleware, async (req, res) => {
-  let api_key = req.header("Authorization");
-
-  if (!api_key) {
-    return res.status(400).json({ error: "API KEY is Required" });
-  }
-
-  let row = await prisma.users.findUnique({
-    where: {
-      api_key: api_key,
-    },
-  });
-
-  if (!row) {
-    return res.status(403).json({ error: "Invalid API KEY" });
-  }
-
+app.post("/shorten", logMiddleware, isValidApiKey, async (req, res) => {
+  let row = req.user;
   let long_url = req.body.url;
   let password = req.body.password;
   let expired_date = req.body.expired_date;
@@ -159,23 +166,10 @@ app.post("/shorten",logMiddleware, async (req, res) => {
   });
 });
 
-app.post("/shorten-bulk", async (req, res) => {
-  const api_key = req.header("Authorization");
+app.post("/shorten-bulk", isValidApiKey, async (req, res) => {
+  const user = req.user
+
   const urls = req.body.urls;
-
-  if (!api_key) {
-    return res.status(400).json({ error: "API Key is required" });
-  }
-
-  const user = await prisma.users.findUnique({
-    where: {
-      api_key: api_key,
-    },
-  });
-
-  if (!user) {
-    return res.status(401).json({ error: "Invalid API Key" });
-  }
 
   if (!user.tier || user.tier !== "enterprise") {
     return res.status(403).json({
@@ -220,27 +214,15 @@ app.post("/shorten-bulk", async (req, res) => {
 
 //patch
 
-app.patch("/shorten/edit", async (req, res) => {
+app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
   try {
-    const api_key = req.header("Authorization");
+    // const api_key = req.header("Authorization");
+    const user = req.user
     const short_code = req.body.short_code;
     const status = req.body.status.toLowerCase();
     const old_password = req.body.old_password;
     const new_password = req.body.new_password;
 
-    if (!api_key) {
-      return res.status(400).json({ error: "API KEY is Required" });
-    }
-
-    const user = await prisma.users.findUnique({
-      where: {
-        api_key: api_key,
-      },
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid API KEY" });
-    }
 
     if (!short_code) {
       return res.status(400).json({ error: "short code parameter is missing" });
@@ -305,24 +287,10 @@ app.patch("/shorten/edit", async (req, res) => {
 
 //Delete
 
-app.delete("/shorten/:code", async (req, res) => {
+app.delete("/shorten/:code", isValidApiKey, async (req, res) => {
   const code = req.params.code;
-  const api_key = req.header("Authorization");
-
-  if (!api_key) {
-    return res.status(400).json({ error: "API KEY is Required" });
-  }
-
-  const user = await prisma.users.findUnique({
-    where: {
-      api_key: api_key,
-    },
-  });
-
-  if (!user) {
-    return res.status(403).json({ error: "Invalid API KEY" });
-  }
-
+  const user = req.user
+ 
   if (!code) {
     return res.status(400).json({ error: "short code parameter is missing" });
   }
@@ -349,21 +317,9 @@ app.delete("/shorten/:code", async (req, res) => {
 
 //list of users
 
-app.get("/user/urls", async (req, res) => {
+app.get("/user/urls",isValidApiKey, async (req, res) => {
   try {
-    const api_key = req.header("Authorization");
-
-    if (!api_key) {
-      return res.status(400).json({ error: "API KEY is Required" });
-    }
-
-    const user = await prisma.users.findUnique({
-      where: { api_key },
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid API KEY" });
-    }
+    const user = req.user
 
     const urls = await prisma.url_shortener.findMany({
       where: { user_id: user.id, deleted_at: null },
@@ -377,7 +333,7 @@ app.get("/user/urls", async (req, res) => {
 
 //Health
 
-app.get("/health",logMiddleware, async (req, res) => {
+app.get("/health", logMiddleware, async (req, res) => {
   try {
     await prisma.$queryRaw`Select 1`;
 
