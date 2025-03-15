@@ -645,6 +645,15 @@ test("/health should return 200 with success", async () => {
   expect(res.body).toHaveProperty("status", "healthy");
   expect(res.body).toHaveProperty("database", "connected");
 });
+test("/health should return 200 with success as well includes X-Response-time header", async () => {
+  const res = await request(app).get("/health");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "healthy");
+  expect(res.body).toHaveProperty("database", "connected");
+  expect(res.headers).toHaveProperty("x-response-time");
+
+});
 
 test("/health should return 500 with failure", async () => {
   jest.spyOn(prisma, "$queryRaw").mockRejectedValue(new Error("DB error"));

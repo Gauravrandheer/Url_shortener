@@ -12,6 +12,16 @@ const port = process.env.PORT || 3000;
 
 //middleware
 
+const responseTimeMiddleware = (req,res,next)=>{
+   req.startTime = Date.now()
+  next()
+}
+const requestTimeMiddleware = (req,res,next)=>{
+  const timeDifference = Date.now()-req.startTime
+  res.set("X-Response-Time", `${timeDifference}ms`)
+  next()
+}
+
 
 const isUserBlacklisted = (req,res,next)=>{
   let api_key = req.header("Authorization")
@@ -86,6 +96,7 @@ const checkEnterpricePlanMiddleware = (req,res,next)=>{
 
 
 //middleware used
+app.use(requestTimeMiddleware)
 app.use(express.json());
 // app.use(logMiddleware);
 
@@ -379,6 +390,8 @@ app.get("/health", logMiddleware, async (req, res) => {
     });
   }
 });
+
+app.use("/health",responseTimeMiddleware)
 
 if (require.main === module) {
   app.listen(port, () => {
