@@ -1,1 +1,4 @@
 [2025-03-15T07:43:53.445Z] GET /redirect?code=FKyYED - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 - IP: ::1
+[2025-03-15T08:26:26.235Z] POST /shorten - UserAgent: PostmanRuntime/7.39.1 - IP: ::1
+[2025-03-15T08:26:51.504Z] GET /redirect?code=FY5YDU - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 - IP: ::1
+[2025-03-15T08:28:18.812Z] GET /health - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 - IP: ::1

@@ -26,7 +26,7 @@ const logMiddleware = (req, res, next) => {
 
 //middleware used
 app.use(express.json());
-app.use(logMiddleware);
+// app.use(logMiddleware);
 
 //generateshortcode
 
@@ -51,7 +51,7 @@ function isValidUrl(url) {
 
 //redirect
 
-app.get("/redirect", async (req, res) => {
+app.get("/redirect", logMiddleware, async (req, res) => {
   const code = req.query.code;
   const password = req?.query.pass;
 
@@ -97,7 +97,7 @@ app.get("/redirect", async (req, res) => {
 });
 
 // Shorten YYYY-MM-DD
-app.post("/shorten", async (req, res) => {
+app.post("/shorten",logMiddleware, async (req, res) => {
   let api_key = req.header("Authorization");
 
   if (!api_key) {
@@ -377,7 +377,7 @@ app.get("/user/urls", async (req, res) => {
 
 //Health
 
-app.get("/health", async (req, res) => {
+app.get("/health",logMiddleware, async (req, res) => {
   try {
     await prisma.$queryRaw`Select 1`;
 
