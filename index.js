@@ -1,5 +1,7 @@
 const express = require("express");
 const { nanoid } = require("nanoid");
+const fs = require("fs");
+const path = require("path");
 // const sqlite3 = require("sqlite3").verbose();
 const { PrismaClient } = require("@prisma/client");
 const { status } = require("express/lib/response");
@@ -7,7 +9,24 @@ const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 3000;
 
+//middleware
+
+const logMiddleware = (req, res, next) => {
+  const logdata = `[${new Date().toISOString()}] ${req.method} ${
+    req.url
+  } - UserAgent: ${req.get("User-Agent")} - IP: ${req.ip}\n`;
+
+  fs.appendFile(path.join(__dirname, "requests.log"), logdata, (err) => {
+    if (err) {
+      console.log("Logging Error:", err);
+    }
+  });
+  next();
+};
+
+//middleware used
 app.use(express.json());
+app.use(logMiddleware);
 
 //generateshortcode
 
@@ -27,9 +46,8 @@ function isValidUrl(url) {
     return false;
   }
 }
-//routers
 
-//user
+//routers
 
 //redirect
 
