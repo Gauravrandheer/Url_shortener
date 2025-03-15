@@ -5,11 +5,35 @@ const path = require("path");
 // const sqlite3 = require("sqlite3").verbose();
 const { PrismaClient } = require("@prisma/client");
 const { status } = require("express/lib/response");
+const { error } = require("console");
 const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 3000;
 
 //middleware
+
+
+const isUserBlacklisted = (req,res,next)=>{
+  let api_key = req.header("Authorization")
+
+  if (!api_key) {
+    return res.status(400).json({ error: "API KEY is Required" });
+  }
+
+  fs.readFile(path.join(__dirname,"blacklist.json"),"utf-8",(err,data)=>{
+    if(err){
+     return res.status(500).json({error:"Internal Server error"})
+    }
+
+    let blacklistdata = JSON.parse(data)
+    if(blacklistdata.includes(api_key)){
+      return res.status(403).json({ error: "Your API key is blacklisted." });
+    }
+
+    next()
+  })
+
+}
 
 const logMiddleware = (req, res, next) => {
   const logdata = `[${new Date().toISOString()}] ${req.method} ${
@@ -58,6 +82,8 @@ const checkEnterpricePlanMiddleware = (req,res,next)=>{
   next()
 
 }
+
+
 
 //middleware used
 app.use(express.json());
@@ -324,7 +350,7 @@ app.delete("/shorten/:code", isValidApiKey, async (req, res) => {
 
 //list of users
 
-app.get("/user/urls",isValidApiKey, async (req, res) => {
+app.get("/user/urls",isValidApiKey, isUserBlacklisted,async (req, res) => {
   try {
     const user = req.user
 

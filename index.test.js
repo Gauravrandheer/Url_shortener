@@ -1,5 +1,6 @@
 const request = require("supertest");
 const express = require("express");
+const fs = require("fs");
 
 const { app, prisma } = require("./index");
 const { status } = require("express/lib/response");
@@ -611,6 +612,32 @@ test("/user/urls should fall with invalid API key", async () => {
   expect(res.body).toHaveProperty("error", "Invalid API KEY");
 });
 
+test("/user/urls should fall with blaclisted API key", async () => {
+  const res = await request(app)
+    .get("/user/urls")
+    .set("Authorization", "e1a94c6f5d2b47c2ab89de3f0a1e7653")
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(403);
+  expect(res.body).toHaveProperty("error", "Your API key is blacklisted.");
+});
+
+test("/user/urls should fall with file not opening", async () => {
+  jest
+    .spyOn(fs, "readFile")
+    .mockImplementation((filePath, encoding, callback) => {
+      callback(new Error("Simulated file reading error"), null);
+    });
+
+  const res = await request(app)
+    .get("/user/urls")
+    .set("Authorization", "e1a94c6f5d2b47c2ab89de3f0a1e7653")
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(500);
+  expect(res.body).toHaveProperty("error", "Internal Server error");
+  jest.restoreAllMocks()
+});
 test("/health should return 200 with success", async () => {
   const res = await request(app).get("/health");
 
@@ -624,4 +651,5 @@ test("/health should return 500 with failure", async () => {
   const res = await request(app).get("/health");
   expect(res.statusCode).toBe(500);
   expect(res.body).toHaveProperty("status", "unhealthy");
+  jest.restoreAllMocks()
 });
