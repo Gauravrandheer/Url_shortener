@@ -46,6 +46,19 @@ const isValidApiKey = async (req, res, next) => {
   next();
 };
 
+const checkEnterpricePlanMiddleware = (req,res,next)=>{
+  const user = req.user
+
+  if (!user.tier || user.tier !== "enterprise") {
+    return res.status(403).json({
+      error: "Bulk shortening is only available for enterprise users",
+    });
+  }
+
+  next()
+
+}
+
 //middleware used
 app.use(express.json());
 // app.use(logMiddleware);
@@ -166,16 +179,10 @@ app.post("/shorten", logMiddleware, isValidApiKey, async (req, res) => {
   });
 });
 
-app.post("/shorten-bulk", isValidApiKey, async (req, res) => {
+app.post("/shorten-bulk", isValidApiKey,checkEnterpricePlanMiddleware, async (req, res) => {
   const user = req.user
 
   const urls = req.body.urls;
-
-  if (!user.tier || user.tier !== "enterprise") {
-    return res.status(403).json({
-      error: "Bulk shortening is only available for enterprise users",
-    });
-  }
 
   if (!Array.isArray(urls) || urls.length === 0) {
     return res.status(400).json({
