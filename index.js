@@ -2,6 +2,8 @@ const express = require("express");
 const { nanoid } = require("nanoid");
 const fs = require("fs");
 const path = require("path");
+const Sentry = require("@sentry/node");
+
 // const sqlite3 = require("sqlite3").verbose();
 const { PrismaClient } = require("@prisma/client");
 const { status } = require("express/lib/response");
@@ -10,40 +12,89 @@ const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+Sentry.init({
+  dsn: "https://37fa398abfe6f30935f97a7e07adaedc@o4508986839597056.ingest.de.sentry.io/4508986843070544",
+
+  // Tracing
+  tracesSampleRate: 1.0, //  Capture 100% of the transactions
+});
+
 //middleware
 
-const responseTimeMiddleware = (req,res,next)=>{
-   req.startTime = Date.now()
-  next()
-}
-const requestTimeMiddleware = (req,res,next)=>{
-  const timeDifference = Date.now()-req.startTime
-  res.set("X-Response-Time", `${timeDifference}ms`)
-  next()
-}
+const  requestTimeMiddleware= (req, res, next) => {
+  req.startTime = Date.now();
+ 
+  next();
+};
+const responseTimeMiddleware = (req, res, next) => {
+  const timeDifference = Date.now() - req.startTime;
+  res.set("X-Response-Time", `${timeDifference}ms`);
+  next();
+};
+
+const sentryMiddleware = (req, res, next) => {
+  try {
+    const start = process.hrtime();
+
+    res.on("finish", () => {
+      const diff = process.hrtime(start);
+      const responseTime = (diff[0] * 1e3 + diff[1] / 1e6).toFixed(3);
+
+      Sentry.captureMessage("Request Tracked", {
+        level: "info",
+        extra: {
+          method: req.method,
+          url: req.url,
+          userAgent: req.get("User-Agent"),
+          ip: req.ip,
+          responseTime: responseTime + "ms",
+          statusCode: res.statusCode,
+        },
+      });
+    });
+
+    next();
+  } catch (error) {
+    Sentry.captureException(error); // Send errors to Sentry
+    next(error);
+  }
+};
 
 
-const isUserBlacklisted = (req,res,next)=>{
-  let api_key = req.header("Authorization")
+const logMiddlewareTime = (name, middlwareFn) => {
+  return async (req, res, next) => {
+    const startTime = process.hrtime();
+  
+    await middlwareFn(req, res, () => {
+      const diff = process.hrtime(startTime);
+      const executionTime = diff[0] * 1000 + diff[1] / 1e6;
+      console.log(`[${name}] Completed in ${executionTime}ms`);
+      next();
+    });
+  };
+};
+
+const isUserBlacklisted = (req, res, next) => {
+  let api_key = req.header("Authorization");
 
   if (!api_key) {
     return res.status(400).json({ error: "API KEY is Required" });
   }
 
-  fs.readFile(path.join(__dirname,"blacklist.json"),"utf-8",(err,data)=>{
-    if(err){
-     return res.status(500).json({error:"Internal Server error"})
+  fs.readFile(path.join(__dirname, "blacklist.json"), "utf-8", (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: "Internal Server error" });
     }
 
-    let blacklistdata = JSON.parse(data)
-    if(blacklistdata.includes(api_key)){
+    let blacklistdata = JSON.parse(data);
+    if (blacklistdata.includes(api_key)) {
       return res.status(403).json({ error: "Your API key is blacklisted." });
     }
 
-    next()
-  })
-
-}
+    next();
+  });
+};
 
 const logMiddleware = (req, res, next) => {
   const logdata = `[${new Date().toISOString()}] ${req.method} ${
@@ -80,8 +131,8 @@ const isValidApiKey = async (req, res, next) => {
   next();
 };
 
-const checkEnterpricePlanMiddleware = (req,res,next)=>{
-  const user = req.user
+const checkEnterpricePlanMiddleware = (req, res, next) => {
+  const user = req.user;
 
   if (!user.tier || user.tier !== "enterprise") {
     return res.status(403).json({
@@ -89,14 +140,12 @@ const checkEnterpricePlanMiddleware = (req,res,next)=>{
     });
   }
 
-  next()
-
-}
-
-
+  next();
+};
 
 //middleware used
-app.use(requestTimeMiddleware)
+app.use(sentryMiddleware)
+app.use(requestTimeMiddleware);
 app.use(express.json());
 // app.use(logMiddleware);
 
@@ -123,7 +172,7 @@ function isValidUrl(url) {
 
 //redirect
 
-app.get("/redirect", logMiddleware, async (req, res) => {
+app.get("/redirect", logMiddlewareTime("logMiddleware",logMiddleware), async (req, res) => {
   const code = req.query.code;
   const password = req?.query.pass;
 
@@ -216,57 +265,61 @@ app.post("/shorten", logMiddleware, isValidApiKey, async (req, res) => {
   });
 });
 
-app.post("/shorten-bulk", isValidApiKey,checkEnterpricePlanMiddleware, async (req, res) => {
-  const user = req.user
+app.post(
+  "/shorten-bulk",
+  isValidApiKey,
+  checkEnterpricePlanMiddleware,
+  async (req, res) => {
+    const user = req.user;
 
-  const urls = req.body.urls;
+    const urls = req.body.urls;
 
-  if (!Array.isArray(urls) || urls.length === 0) {
-    return res.status(400).json({
-      error:
-        "At least one valid URL is required, and URLs input must be an array",
+    if (!Array.isArray(urls) || urls.length === 0) {
+      return res.status(400).json({
+        error:
+          "At least one valid URL is required, and URLs input must be an array",
+      });
+    }
+
+    const results = await Promise.all(
+      urls.map(async (url) => {
+        try {
+          if (!url || typeof url !== "string" || !isValidUrl(url)) {
+            return { original_url: url, error: "Invalid url format" };
+          }
+          const short_code = generateShortCode();
+          const newData = await prisma.url_shortener.create({
+            data: {
+              short_code: short_code,
+              original_url: url,
+              user_id: user.id,
+            },
+          });
+
+          return { original_url: url, short_code: newData.short_code };
+        } catch (error) {
+          return { original_url: url, error: error.message };
+        }
+      })
+    );
+
+    return res.status(200).json({
+      Success: results.filter((r) => !r.error),
+      Failure: results.filter((r) => r.error),
     });
   }
-
-  const results = await Promise.all(
-    urls.map(async (url) => {
-      try {
-        if (!url || typeof url !== "string" || !isValidUrl(url)) {
-          return { original_url: url, error: "Invalid url format" };
-        }
-        const short_code = generateShortCode();
-        const newData = await prisma.url_shortener.create({
-          data: {
-            short_code: short_code,
-            original_url: url,
-            user_id: user.id,
-          },
-        });
-
-        return { original_url: url, short_code: newData.short_code };
-      } catch (error) {
-        return { original_url: url, error: error.message };
-      }
-    })
-  );
-
-  return res.status(200).json({
-    Success: results.filter((r) => !r.error),
-    Failure: results.filter((r) => r.error),
-  });
-});
+);
 
 //patch
 
 app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
   try {
     // const api_key = req.header("Authorization");
-    const user = req.user
+    const user = req.user;
     const short_code = req.body.short_code;
     const status = req.body.status.toLowerCase();
     const old_password = req.body.old_password;
     const new_password = req.body.new_password;
-
 
     if (!short_code) {
       return res.status(400).json({ error: "short code parameter is missing" });
@@ -333,8 +386,8 @@ app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
 
 app.delete("/shorten/:code", isValidApiKey, async (req, res) => {
   const code = req.params.code;
-  const user = req.user
- 
+  const user = req.user;
+
   if (!code) {
     return res.status(400).json({ error: "short code parameter is missing" });
   }
@@ -361,9 +414,9 @@ app.delete("/shorten/:code", isValidApiKey, async (req, res) => {
 
 //list of users
 
-app.get("/user/urls",isValidApiKey, isUserBlacklisted,async (req, res) => {
+app.get("/user/urls", isValidApiKey, isUserBlacklisted, async (req, res) => {
   try {
-    const user = req.user
+    const user = req.user;
 
     const urls = await prisma.url_shortener.findMany({
       where: { user_id: user.id, deleted_at: null },
@@ -376,7 +429,7 @@ app.get("/user/urls",isValidApiKey, isUserBlacklisted,async (req, res) => {
 });
 
 //Health
-
+app.use("/health", responseTimeMiddleware);
 app.get("/health", logMiddleware, async (req, res) => {
   try {
     await prisma.$queryRaw`Select 1`;
@@ -391,8 +444,7 @@ app.get("/health", logMiddleware, async (req, res) => {
   }
 });
 
-app.use("/health",responseTimeMiddleware)
-
+app.use(sentryMiddleware)
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running at ${BASE_URL}:${port}`);
