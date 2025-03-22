@@ -1,147 +1,26 @@
 const express = require("express");
 const { nanoid } = require("nanoid");
-const fs = require("fs");
-const path = require("path");
 const Sentry = require("@sentry/node");
 
 // const sqlite3 = require("sqlite3").verbose();
-const { PrismaClient } = require("@prisma/client");
+
 const { status } = require("express/lib/response");
 const { error } = require("console");
-const prisma = new PrismaClient();
+const prisma = require("./prismaClient")
 const app = express();
 const port = process.env.PORT || 3000;
 
+const {
+  checkEnterpricePlanMiddleware,
+  isUserBlacklisted,
+  isValidApiKey,
+  logMiddleware,
+  logMiddlewareTime,
+  requestTimeMiddleware,
+  responseTimeMiddleware,
+  sentryMiddleware
+} = require("./middlewares")
 
-Sentry.init({
-  dsn: "https://37fa398abfe6f30935f97a7e07adaedc@o4508986839597056.ingest.de.sentry.io/4508986843070544",
-
-  // Tracing
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-});
-
-//middleware
-
-const  requestTimeMiddleware= (req, res, next) => {
-  req.startTime = Date.now();
- 
-  next();
-};
-const responseTimeMiddleware = (req, res, next) => {
-  const timeDifference = Date.now() - req.startTime;
-  res.set("X-Response-Time", `${timeDifference}ms`);
-  next();
-};
-
-const sentryMiddleware = (req, res, next) => {
-  try {
-    const start = process.hrtime();
-
-    res.on("finish", () => {
-      const diff = process.hrtime(start);
-      const responseTime = (diff[0] * 1e3 + diff[1] / 1e6).toFixed(3);
-
-      Sentry.captureMessage("Request Tracked", {
-        level: "info",
-        extra: {
-          method: req.method,
-          url: req.url,
-          userAgent: req.get("User-Agent"),
-          ip: req.ip,
-          responseTime: responseTime + "ms",
-          statusCode: res.statusCode,
-        },
-      });
-    });
-
-    next();
-  } catch (error) {
-    Sentry.captureException(error); // Send errors to Sentry
-    next(error);
-  }
-};
-
-
-const logMiddlewareTime = (name, middlwareFn) => {
-  return async (req, res, next) => {
-    const startTime = process.hrtime();
-  
-    await middlwareFn(req, res, () => {
-      const diff = process.hrtime(startTime);
-      const executionTime = diff[0] * 1000 + diff[1] / 1e6;
-      console.log(`[${name}] Completed in ${executionTime}ms`);
-      next();
-    });
-  };
-};
-
-const isUserBlacklisted = (req, res, next) => {
-  let api_key = req.header("Authorization");
-
-  if (!api_key) {
-    return res.status(400).json({ error: "API KEY is Required" });
-  }
-
-  fs.readFile(path.join(__dirname, "blacklist.json"), "utf-8", (err, data) => {
-    if (err) {
-      return res.status(500).json({ error: "Internal Server error" });
-    }
-
-    let blacklistdata = JSON.parse(data);
-    if (blacklistdata.includes(api_key)) {
-      return res.status(403).json({ error: "Your API key is blacklisted." });
-    }
-
-    next();
-  });
-};
-
-const logMiddleware = (req, res, next) => {
-  const logdata = `[${new Date().toISOString()}] ${req.method} ${
-    req.url
-  } - UserAgent: ${req.get("User-Agent")} - IP: ${req.ip}\n`;
-
-  fs.appendFile(path.join(__dirname, "requests.log"), logdata, (err) => {
-    if (err) {
-      console.log("Logging Error:", err);
-    }
-  });
-  next();
-};
-
-const isValidApiKey = async (req, res, next) => {
-  let api_key = req.header("Authorization");
-
-  if (!api_key) {
-    return res.status(400).json({ error: "API KEY is Required" });
-  }
-
-  let user = await prisma.users.findUnique({
-    where: {
-      api_key: api_key,
-    },
-  });
-
-  if (!user) {
-    return res.status(401).json({ error: "Invalid API KEY" });
-  }
-
-  req.user = user;
-
-  next();
-};
-
-const checkEnterpricePlanMiddleware = (req, res, next) => {
-  const user = req.user;
-
-  if (!user.tier || user.tier !== "enterprise") {
-    return res.status(403).json({
-      error: "Bulk shortening is only available for enterprise users",
-    });
-  }
-
-  next();
-};
 
 //middleware used
 app.use(sentryMiddleware)
@@ -451,4 +330,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, prisma };
+module.exports = app

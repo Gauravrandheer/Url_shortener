@@ -1,8 +1,8 @@
 const request = require("supertest");
 const express = require("express");
 const fs = require("fs");
-
-const { app, prisma } = require("./index");
+const prisma = require("./prismaClient")
+const  app  = require("./index");
 const { status } = require("express/lib/response");
 
 beforeEach(async () => {
