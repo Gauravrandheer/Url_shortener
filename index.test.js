@@ -4,9 +4,11 @@ const fs = require("fs");
 const prisma = require("./prismaClient")
 const  app  = require("./index");
 const { status } = require("express/lib/response");
+const cache = require("./cache")
 
 beforeEach(async () => {
   await prisma.url_shortener.deleteMany();
+  cache.clear()
 });
 
 test("Post /shorten api should store generated shortcode with valid api key with expired date with no password", async () => {
@@ -138,7 +140,7 @@ test("Post /short api should different shortcode even if original url is already
   expect(secondRes.body).toHaveProperty("short_url");
 });
 
-test("Get /redirect api should redirect the url with expired_date not passed without password", async () => {
+test("Get /redirect api should redirect the url with expired_date not passed without password as well no cache ", async () => {
   let expired_date = "2100-03-07";
 
   await prisma.url_shortener.create({
@@ -153,6 +155,32 @@ test("Get /redirect api should redirect the url with expired_date not passed wit
 
   expect(res.statusCode).toBe(302);
   expect(res.headers.location).toBe("https://example.com/");
+  expect(res.header).toHaveProperty("x-cache-status","MISS")
+});
+
+test("Get /redirect api should redirect the url with expired_date not passed without password as well give response from cache for the 2nd time same request ", async () => {
+  let expired_date = "2100-03-07";
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      expired_at: new Date(expired_date),
+    },
+  });
+
+  const res = await request(app).get("/redirect?code=yoDhDo");
+
+  expect(res.statusCode).toBe(302);
+  expect(res.headers.location).toBe("https://example.com/");
+  expect(res.header).toHaveProperty("x-cache-status","MISS")
+
+  
+  const res2 = await request(app).get("/redirect?code=yoDhDo");
+
+  expect(res2.statusCode).toBe(302);
+  expect(res2.headers.location).toBe("https://example.com/");
+  expect(res2.header).toHaveProperty("x-cache-status","HIT")
 });
 
 test("Get /redirect api should redirect the url with expired_date not passed with password", async () => {

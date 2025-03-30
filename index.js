@@ -21,6 +21,8 @@ const {
   sentryMiddleware
 } = require("./middlewares")
 
+const cache = require("./cache")
+
 
 //middleware used
 app.use(sentryMiddleware)
@@ -59,6 +61,11 @@ app.get("/redirect", logMiddlewareTime("logMiddleware",logMiddleware), async (re
     return res.status(400).json({ error: "Missing code parameter" });
   }
 
+  if(cache.has(code)){
+    res.set("x-cache-Status","HIT")
+    return res.status(302).redirect(cache.get(code));
+  }
+
   const row = await prisma.url_shortener.findFirst({
     where: { short_code: code, deleted_at: null },
   });
@@ -78,6 +85,9 @@ app.get("/redirect", logMiddlewareTime("logMiddleware",logMiddleware), async (re
     if (isExpired) {
       return res.status(404).json({ error: "short_code is expired" });
     }
+
+    
+
     await prisma.url_shortener.update({
       where: {
         id: row.id,
@@ -90,6 +100,8 @@ app.get("/redirect", logMiddlewareTime("logMiddleware",logMiddleware), async (re
       },
     });
 
+    cache.set(code,row.original_url)
+    res.set("x-Cache-Status","MISS")
     return res.status(302).redirect(row.original_url);
   } else {
     return res.status(404).json({ error: "URL NOT FOUND" });
