@@ -3,6 +3,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2025-04-07
+
+### Added
+- Added in memory cache to /redirect endpoint to improve response time.
+
 
 ## [0.6.0] - 2025-03-16 
 

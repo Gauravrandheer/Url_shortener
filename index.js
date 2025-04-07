@@ -6,7 +6,7 @@ const Sentry = require("@sentry/node");
 
 const { status } = require("express/lib/response");
 const { error } = require("console");
-const prisma = require("./prismaClient")
+const prisma = require("./prismaClient");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -18,14 +18,13 @@ const {
   logMiddlewareTime,
   requestTimeMiddleware,
   responseTimeMiddleware,
-  sentryMiddleware
-} = require("./middlewares")
+  sentryMiddleware,
+} = require("./middlewares");
 
-const cache = require("./cache")
-
+const cache = require("./cache");
 
 //middleware used
-app.use(sentryMiddleware)
+app.use(sentryMiddleware);
 app.use(requestTimeMiddleware);
 app.use(express.json());
 // app.use(logMiddleware);
@@ -52,61 +51,81 @@ function isValidUrl(url) {
 //routers
 
 //redirect
+const enableCache = true;
+let cacheHits = 0;
+let cacheMiss = 0;
 
-app.get("/redirect", logMiddlewareTime("logMiddleware",logMiddleware), async (req, res) => {
-  const code = req.query.code;
-  const password = req?.query.pass;
+app.get(
+  "/redirect",
+  logMiddlewareTime("logMiddleware", logMiddleware),
+  async (req, res) => {
+    const code = req.query.code;
+    const password = req?.query.pass;
 
-  if (!code) {
-    return res.status(400).json({ error: "Missing code parameter" });
-  }
-
-  if(cache.has(code)){
-    res.set("x-cache-Status","HIT")
-    return res.status(302).redirect(cache.get(code));
-  }
-
-  const row = await prisma.url_shortener.findFirst({
-    where: { short_code: code, deleted_at: null },
-  });
-
-  if (row && row.password && row.password !== password) {
-    return res.status(403).json({
-      error:
-        "This shortcode is password protected.Please provide valid password",
-    });
-  }
-
-  if (row) {
-    const isExpired = row.expired_at
-      ? new Date() > new Date(row.expired_at)
-      : false;
-
-    if (isExpired) {
-      return res.status(404).json({ error: "short_code is expired" });
+    if (!code) {
+      return res.status(400).json({ error: "Missing code parameter" });
     }
 
-    
+    if (enableCache && cache.has(code)) {
+      cacheHits++;
+      res.set("x-cache-Status", "HIT");
+      return res.status(302).redirect(cache.get(code));
+    }
 
-    await prisma.url_shortener.update({
-      where: {
-        id: row.id,
-      },
-      data: {
-        visit_count: {
-          increment: 1,
-        },
-        last_accessed_at: new Date(),
-      },
+    cacheMiss++;
+
+    const row = await prisma.url_shortener.findFirst({
+      where: { short_code: code, deleted_at: null },
     });
 
-    cache.set(code,row.original_url)
-    res.set("x-Cache-Status","MISS")
-    return res.status(302).redirect(row.original_url);
-  } else {
-    return res.status(404).json({ error: "URL NOT FOUND" });
+    if (row && row.password && row.password !== password) {
+      return res.status(403).json({
+        error:
+          "This shortcode is password protected.Please provide valid password",
+      });
+    }
+
+    if (row) {
+      const isExpired = row.expired_at
+        ? new Date() > new Date(row.expired_at)
+        : false;
+
+      if (isExpired) {
+        return res.status(404).json({ error: "short_code is expired" });
+      }
+
+      await prisma.url_shortener.update({
+        where: {
+          id: row.id,
+        },
+        data: {
+          visit_count: {
+            increment: 1,
+          },
+          last_accessed_at: new Date(),
+        },
+      });
+
+      if (enableCache) {
+        cache.set(code, row.original_url);
+        res.set("x-Cache-Status", "MISS");
+      }
+      return res.status(302).redirect(row.original_url);
+    } else {
+      return res.status(404).json({ error: "URL NOT FOUND" });
+    }
   }
-});
+);
+
+setInterval(() => {
+  const totalRequest = cacheHits + cacheMiss;
+  if (totalRequest == 0) {
+    return;
+  }
+  const cacheHitRatio = (cacheHits / totalRequest) * 100;
+  console.log(`cache :${cache.size()}`)
+  console.log(`Cache Hit Ratio : ${cacheHitRatio} % `);
+}, 5000);
 
 // Shorten YYYY-MM-DD
 app.post("/shorten", logMiddleware, isValidApiKey, async (req, res) => {
@@ -335,11 +354,11 @@ app.get("/health", logMiddleware, async (req, res) => {
   }
 });
 
-app.use(sentryMiddleware)
+app.use(sentryMiddleware);
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running at ${BASE_URL}:${port}`);
   });
 }
 
-module.exports = app
+module.exports = app;
