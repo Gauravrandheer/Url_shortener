@@ -21,7 +21,7 @@ const {
   sentryMiddleware,
 } = require("./middlewares");
 
-const cache = require("./cache");
+const redisClient = require("./cache");
 
 //middleware used
 app.use(sentryMiddleware);
@@ -66,10 +66,13 @@ app.get(
       return res.status(400).json({ error: "Missing code parameter" });
     }
 
-    if (enableCache && cache.has(code)) {
+    const cacheUrl = await redisClient.get(code);
+
+    if (enableCache && cacheUrl) {
       cacheHits++;
       res.set("x-cache-Status", "HIT");
-      return res.status(302).redirect(cache.get(code));
+      res.set("Cache-Control", "public,max-age=86400");
+      return res.status(302).redirect(cacheUrl);
     }
 
     cacheMiss++;
@@ -107,8 +110,9 @@ app.get(
       });
 
       if (enableCache) {
-        cache.set(code, row.original_url);
+        await redisClient.set(code, row.original_url);
         res.set("x-Cache-Status", "MISS");
+        res.set("Cache-Control", "public,max-age=86400");
       }
       return res.status(302).redirect(row.original_url);
     } else {
@@ -117,15 +121,20 @@ app.get(
   }
 );
 
-setInterval(() => {
+app.get("/cacheHitRatio", async (req, res) => {
   const totalRequest = cacheHits + cacheMiss;
   if (totalRequest == 0) {
-    return;
+    return res.json({ message: "No requests yet." });
   }
   const cacheHitRatio = (cacheHits / totalRequest) * 100;
-  console.log(`cache :${cache.size()}`)
+  // console.log(`cache :${cache.size()}`)
   console.log(`Cache Hit Ratio : ${cacheHitRatio} % `);
-}, 5000);
+  return res.json({
+    cacheHits,
+    cacheMiss,
+    cacheHitRatio: `${cacheHitRatio.toFixed(2)}%`
+  });
+});
 
 // Shorten YYYY-MM-DD
 app.post("/shorten", logMiddleware, isValidApiKey, async (req, res) => {

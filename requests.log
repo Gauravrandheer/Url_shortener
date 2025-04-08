@@ -1283,3 +1283,114 @@
 [2025-03-30T06:03:02.503Z] GET /redirect?code=fAexcM - UserAgent: Apache-HttpClient/4.5.14 (Java/19.0.2) - IP: ::ffff:127.0.0.1
 [2025-03-30T06:03:03.512Z] GET /redirect?code=fAexcM - UserAgent: Apache-HttpClient/4.5.14 (Java/19.0.2) - IP: ::ffff:127.0.0.1
 [2025-03-30T06:03:04.509Z] GET /redirect?code=fAexcM - UserAgent: Apache-HttpClient/4.5.14 (Java/19.0.2) - IP: ::ffff:127.0.0.1
+[2025-04-08T01:44:57.660Z] GET /health - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:01:11.593Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:02:30.069Z] GET /redirect?code=fAexcM - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:26:34.954Z] POST /shorten - UserAgent: PostmanRuntime/7.39.1 - IP: ::1
+[2025-04-08T02:27:01.378Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:27:09.078Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:27:17.269Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:27:19.305Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:27:42.126Z] GET /redirect?code=VQVXZ4 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:30:53.312Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T02:31:03.648Z] GET /redirect?code=4TDi40&pass=1234 - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 - IP: ::1
+[2025-04-08T13:35:31.170Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:31.846Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:32.162Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:32.487Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:32.901Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:33.008Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:33.214Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:33.424Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:33.637Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:34.156Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:34.819Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:35.029Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:35.362Z] GET /redirect?code=yoDhDo&pass=123456 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:35.787Z] GET /redirect?code=yoDhDo&pass=12345 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:36.101Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:36.316Z] GET /redirect - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:36.429Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:47.771Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:48.050Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T13:35:48.237Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:48.068Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:48.696Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:48.983Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:49.268Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:49.644Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:49.753Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:49.941Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:50.130Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:50.321Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:50.788Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:51.369Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:51.563Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:51.848Z] GET /redirect?code=yoDhDo&pass=123456 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:52.228Z] GET /redirect?code=yoDhDo&pass=12345 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:52.515Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:52.707Z] GET /redirect - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:00:52.806Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:01:01.462Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:01:01.756Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T14:01:01.949Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:01.741Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:02.372Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:02.663Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:02.961Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:03.339Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:03.438Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:03.626Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:03.820Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:04.010Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:04.480Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:05.070Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:05.280Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:05.572Z] GET /redirect?code=yoDhDo&pass=123456 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:05.956Z] GET /redirect?code=yoDhDo&pass=12345 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:06.247Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:06.448Z] GET /redirect - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:06.554Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:15.279Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:15.586Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:15.787Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:41.268Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:41.839Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:42.147Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:42.454Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:42.855Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:42.962Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:43.165Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:43.369Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:43.578Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:44.081Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:44.688Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:44.904Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:45.212Z] GET /redirect?code=yoDhDo&pass=123456 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:45.921Z] GET /redirect?code=yoDhDo&pass=12345 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:46.225Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:46.430Z] GET /redirect - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:17:46.535Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:18:00.500Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:18:00.802Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:18:01.010Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:07.206Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:07.794Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:08.093Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:08.392Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:08.796Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:08.900Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:09.101Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:09.299Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:09.500Z] POST /shorten - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:09.984Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:10.588Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:10.792Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:11.091Z] GET /redirect?code=yoDhDo&pass=123456 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:11.499Z] GET /redirect?code=yoDhDo&pass=12345 - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:11.799Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:12.002Z] GET /redirect - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:12.105Z] GET /redirect?code=yoDhDo - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:24.208Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:24.498Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1
+[2025-04-08T15:24:24.696Z] GET /health - UserAgent: undefined - IP: ::ffff:127.0.0.1

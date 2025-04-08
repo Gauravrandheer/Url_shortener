@@ -4,13 +4,16 @@ const fs = require("fs");
 const prisma = require("./prismaClient")
 const  app  = require("./index");
 const { status } = require("express/lib/response");
-const cache = require("./cache")
+const redisClient = require("./cache")
 
 beforeEach(async () => {
-  await prisma.url_shortener.deleteMany();
-  cache.clear()
-});
 
+  await prisma.url_shortener.deleteMany();
+  await redisClient.flushDb();
+});
+afterAll(async () => {
+  await redisClient.quit();
+});
 test("Post /shorten api should store generated shortcode with valid api key with expired date with no password", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
