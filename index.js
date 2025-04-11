@@ -22,6 +22,7 @@ const {
 } = require("./middlewares");
 
 const redisClient = require("./cache");
+const { updateCached, getCached, isExpiredfunc } = require("./utils/cacheHelper");
 
 //middleware used
 app.use(sentryMiddleware);
@@ -66,13 +67,29 @@ app.get(
       return res.status(400).json({ error: "Missing code parameter" });
     }
 
-    const cacheUrl = await redisClient.get(code);
+    let cachedData = await getCached(redisClient,code);
 
-    if (enableCache && cacheUrl) {
+    if (enableCache && cachedData) {
+      cachedData = JSON.parse(cachedData);
+
+      if (cachedData.passwordProtected) {
+        if (cachedData.password !== password)
+          return res.status(403).json({
+            error:
+              "This shortcode is password protected.Please provide valid password",
+          });
+      }
+
+      const isExpired = isExpiredfunc(cachedData)
+
+      if (isExpired) {
+        return res.status(404).json({ error: "short_code is expired" });
+      }
+
       cacheHits++;
       res.set("x-cache-Status", "HIT");
       res.set("Cache-Control", "public,max-age=86400");
-      return res.status(302).redirect(cacheUrl);
+      return res.status(302).redirect(cachedData.original_url);
     }
 
     cacheMiss++;
@@ -89,9 +106,7 @@ app.get(
     }
 
     if (row) {
-      const isExpired = row.expired_at
-        ? new Date() > new Date(row.expired_at)
-        : false;
+      const isExpired = isExpiredfunc(row)
 
       if (isExpired) {
         return res.status(404).json({ error: "short_code is expired" });
@@ -110,7 +125,7 @@ app.get(
       });
 
       if (enableCache) {
-        await redisClient.set(code, row.original_url);
+        await updateCached(redisClient,code,row)
         res.set("x-Cache-Status", "MISS");
         res.set("Cache-Control", "public,max-age=86400");
       }
@@ -132,7 +147,7 @@ app.get("/cacheHitRatio", async (req, res) => {
   return res.json({
     cacheHits,
     cacheMiss,
-    cacheHitRatio: `${cacheHitRatio.toFixed(2)}%`
+    cacheHitRatio: `${cacheHitRatio.toFixed(2)}%`,
   });
 });
 
