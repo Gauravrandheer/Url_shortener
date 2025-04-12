@@ -268,7 +268,7 @@ app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
     if (status == "active") {
       expiredDate = null;
     } else if (status == "inactive") {
-      expiredDate = new Date();
+      expiredDate = new Date(null);
     } else {
       return res.status(400).json({ error: "Invalid status parameter" });
     }
@@ -301,7 +301,7 @@ app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
       password: new_password || row.password,
     };
 
-    await prisma.url_shortener.update({
+   const updatedRow =  await prisma.url_shortener.update({
       where: {
         short_code: short_code,
         user_id: user.id,
@@ -309,6 +309,10 @@ app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
       },
       data: newdata,
     });
+
+    if (enableCache) {
+      await updateCached(redisClient,short_code,updatedRow)
+    }
 
     return res.status(200).json({ status: "status updated succesfully" });
   } catch (error) {

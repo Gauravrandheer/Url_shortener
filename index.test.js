@@ -1,13 +1,12 @@
 const request = require("supertest");
 const express = require("express");
 const fs = require("fs");
-const prisma = require("./prismaClient")
-const  app  = require("./index");
+const prisma = require("./prismaClient");
+const app = require("./index");
 const { status } = require("express/lib/response");
-const redisClient = require("./cache")
+const redisClient = require("./cache");
 
 beforeEach(async () => {
-
   await prisma.url_shortener.deleteMany();
   await redisClient.flushDb();
 });
@@ -158,7 +157,7 @@ test("Get /redirect api should redirect the url with expired_date not passed wit
 
   expect(res.statusCode).toBe(302);
   expect(res.headers.location).toBe("https://example.com/");
-  expect(res.header).toHaveProperty("x-cache-status","MISS")
+  expect(res.header).toHaveProperty("x-cache-status", "MISS");
 });
 
 test("Get /redirect api should redirect the url with expired_date not passed without password as well give response from cache for the 2nd time same request ", async () => {
@@ -176,14 +175,13 @@ test("Get /redirect api should redirect the url with expired_date not passed wit
 
   expect(res.statusCode).toBe(302);
   expect(res.headers.location).toBe("https://example.com/");
-  expect(res.header).toHaveProperty("x-cache-status","MISS")
+  expect(res.header).toHaveProperty("x-cache-status", "MISS");
 
-  
   const res2 = await request(app).get("/redirect?code=yoDhDo");
 
   expect(res2.statusCode).toBe(302);
   expect(res2.headers.location).toBe("https://example.com/");
-  expect(res2.header).toHaveProperty("x-cache-status","HIT")
+  expect(res2.header).toHaveProperty("x-cache-status", "HIT");
 });
 
 test("Get /redirect api should redirect the url with expired_date not passed with password", async () => {
@@ -430,6 +428,115 @@ test("/shorten/edit api should give succees with valid api key with valid shortc
   expect(res.body).toHaveProperty("status", "status updated succesfully");
 });
 
+test("/shorten/edit api should give succees with valid api key with valid shortcode and status and no password with updated cached", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      user_id: 1,
+    },
+  });
+
+  const res = await request(app)
+    .patch("/shorten/edit")
+    .send({ short_code: "yoDhDo", status: "inactive" })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "status updated succesfully");
+
+  const cached = await redisClient.get("yoDhDo");
+  const parsed = JSON.parse(cached);
+
+  expect(parsed).toMatchObject({
+    original_url: "https://example.com/",
+    passwordProtected: false,
+    password: null,
+    expired_at: new Date(null).toISOString(),
+  });
+});
+
+test("/shorten/edit api should error when redis is down", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      user_id: 1,
+    },
+  });
+
+  await redisClient.set(
+    "yoDhDo",
+    JSON.stringify({
+      original_url: "https://example.com/",
+      passwordProtected: false,
+      password: null,
+      expired_at: new Date(null),
+    })
+  );
+
+  const mock = jest
+    .spyOn(redisClient, "set")
+    .mockRejectedValue(new Error("Redis is down"));
+
+  const res = await request(app)
+    .patch("/shorten/edit")
+    .send({ short_code: "yoDhDo", status: "active" })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(500);
+  expect(res.body).toHaveProperty("error", "Internal server error");
+  mock.mockRestore();
+});
+
+///
+test("/shorten/edit api should give succees with valid api key with valid shortcode and status and no password but not updated cached", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+      user_id: 1,
+    },
+  });
+
+  await redisClient.set(
+    "yoDhDo",
+    JSON.stringify({
+      original_url: "https://example.com/",
+      passwordProtected: false,
+      password: null,
+      expired_at: new Date(null),
+    })
+  );
+
+  const mock = jest.spyOn(redisClient, "set").mockResolvedValue("OK");
+
+  const res = await request(app)
+    .patch("/shorten/edit")
+    .send({ short_code: "yoDhDo", status: "active" })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "status updated succesfully");
+
+  const cached = await redisClient.get("yoDhDo");
+  const parsed = JSON.parse(cached);
+
+  expect(parsed.expired_at).toEqual(new Date(null).toISOString());
+
+  mock.mockRestore();
+});
+///
+
 test("/shorten/edit api should give succees with valid api key with valid shortcode and status with also change password ", async () => {
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
 
@@ -667,7 +774,7 @@ test("/user/urls should fall with file not opening", async () => {
 
   expect(res.statusCode).toBe(500);
   expect(res.body).toHaveProperty("error", "Internal Server error");
-  jest.restoreAllMocks()
+  jest.restoreAllMocks();
 });
 test("/health should return 200 with success", async () => {
   const res = await request(app).get("/health");
@@ -683,7 +790,6 @@ test("/health should return 200 with success as well includes X-Response-time he
   expect(res.body).toHaveProperty("status", "healthy");
   expect(res.body).toHaveProperty("database", "connected");
   expect(res.headers).toHaveProperty("x-response-time");
-
 });
 
 test("/health should return 500 with failure", async () => {
@@ -691,5 +797,5 @@ test("/health should return 500 with failure", async () => {
   const res = await request(app).get("/health");
   expect(res.statusCode).toBe(500);
   expect(res.body).toHaveProperty("status", "unhealthy");
-  jest.restoreAllMocks()
+  jest.restoreAllMocks();
 });
