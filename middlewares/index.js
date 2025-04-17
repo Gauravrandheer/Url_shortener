@@ -1,4 +1,5 @@
 const checkEnterpricePlanMiddleware = require("./checkEnterpricePlanMiddleware")
+const checkRateLimiter = require("./checkRateLimiter")
 const isUserBlacklisted = require("./isUserBlacklisted")
 const isValidApiKey = require("./isValidApiKey")
 const logMiddleware = require("./logMiddleware")
@@ -15,5 +16,6 @@ module.exports = {
     logMiddlewareTime,
     requestTimeMiddleware,
     responseTimeMiddleware,
-    sentryMiddleware
+    sentryMiddleware,
+    checkRateLimiter
 }

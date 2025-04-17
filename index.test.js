@@ -799,3 +799,51 @@ test("/health should return 500 with failure", async () => {
   expect(res.body).toHaveProperty("status", "unhealthy");
   jest.restoreAllMocks();
 });
+
+
+test("should allow up to 100 requests", async()=>{
+  
+  const ip = "123.123.123.123"
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+    },
+  });
+
+
+  for(let i=0;i<99;i++){
+    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+  }
+  
+  const res = await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+
+  expect(res.statusCode).toBe(302);
+  expect(res.headers.location).toBe("https://example.com/");
+
+})
+
+
+test("should block ip after 100 requests", async()=>{
+  
+  const ip = "123.123.123.123"
+
+  await prisma.url_shortener.create({
+    data: {
+      short_code: "yoDhDo",
+      original_url: "https://example.com/",
+    },
+  });
+
+
+  for(let i=0;i<100;i++){
+    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+  }
+  
+  const res = await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+
+  expect(res.statusCode).toBe(429);
+  expect(res.body).toHaveProperty("error","Too many requests. Try again later.");
+
+})

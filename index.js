@@ -19,12 +19,14 @@ const {
   requestTimeMiddleware,
   responseTimeMiddleware,
   sentryMiddleware,
+  checkRateLimiter
 } = require("./middlewares");
 
 const redisClient = require("./cache");
 const { updateCached, getCached, isExpiredfunc } = require("./utils/cacheHelper");
 
 //middleware used
+app.use(checkRateLimiter)
 app.use(sentryMiddleware);
 app.use(requestTimeMiddleware);
 app.use(express.json());
