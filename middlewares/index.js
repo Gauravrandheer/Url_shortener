@@ -7,6 +7,7 @@ const logMiddlewareTime = require("./logMiddlewareTime")
 const requestTimeMiddleware = require("./requestTimeMiddleware")
 const responseTimeMiddleware = require("./responseTimeMiddleware")
 const sentryMiddleware = require("./sentryMiddleware")
+const apiKeyRateLimiter = require("./apiKeyRateLimiter")
 
 module.exports = {
     checkEnterpricePlanMiddleware,
@@ -17,5 +18,6 @@ module.exports = {
     requestTimeMiddleware,
     responseTimeMiddleware,
     sentryMiddleware,
-    checkRateLimiter
+    checkRateLimiter,
+    apiKeyRateLimiter
 }

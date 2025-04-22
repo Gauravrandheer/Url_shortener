@@ -19,14 +19,17 @@ const {
   requestTimeMiddleware,
   responseTimeMiddleware,
   sentryMiddleware,
-  checkRateLimiter
+  checkRateLimiter,
+  apiKeyRateLimiter
 } = require("./middlewares");
 
 const redisClient = require("./cache");
 const { updateCached, getCached, isExpiredfunc } = require("./utils/cacheHelper");
 
 //middleware used
-app.use(checkRateLimiter)
+// app.use(checkRateLimiter) switch to api key Rate limiter
+app.use("/shorten",apiKeyRateLimiter(10, "/shorten"));
+app.use("/redirect",checkRateLimiter(50));
 app.use(sentryMiddleware);
 app.use(requestTimeMiddleware);
 app.use(express.json());

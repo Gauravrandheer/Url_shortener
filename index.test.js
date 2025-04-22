@@ -800,10 +800,105 @@ test("/health should return 500 with failure", async () => {
   jest.restoreAllMocks();
 });
 
+// switch from ip to api rate limiting
+// test("should allow up to 100 requests", async()=>{
 
-test("should allow up to 100 requests", async()=>{
-  
-  const ip = "123.123.123.123"
+//   const ip = "123.123.123.123"
+
+//   await prisma.url_shortener.create({
+//     data: {
+//       short_code: "yoDhDo",
+//       original_url: "https://example.com/",
+//     },
+//   });
+
+//   for(let i=0;i<99;i++){
+//     await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+//   }
+
+//   const res = await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+
+//   expect(res.statusCode).toBe(302);
+//   expect(res.headers.location).toBe("https://example.com/");
+
+// })
+
+// test("should block ip after 100 requests", async()=>{
+
+//   const ip = "123.123.123.123"
+
+//   await prisma.url_shortener.create({
+//     data: {
+//       short_code: "yoDhDo",
+//       original_url: "https://example.com/",
+//     },
+//   });
+
+//   for(let i=0;i<100;i++){
+//     await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+//   }
+
+//   const res = await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+
+//   expect(res.statusCode).toBe(429);
+//   expect(res.body).toHaveProperty("error","Too many requests. Try again later.");
+
+// })
+
+//API Rate limiting
+test("/shorten should allow up to 10 requests per second", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+  const test_url = "https://example.com/";
+
+  for (let i = 0; i < 9; i++) {
+    await request(app)
+      .post("/shorten")
+      .send({ url: test_url })
+      .set("Authorization", api_key)
+      .set("Accept", "application/json");
+  }
+  const res = await request(app)
+    .post("/shorten")
+    .send({ url: test_url })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "shortcode stored");
+  expect(res.body).toHaveProperty("short_url");
+});
+
+test("/shorten should stop more than 10 requests per second", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+  const test_url = "https://example.com/";
+
+  const requests = [];
+
+  for (let i = 0; i < 11; i++) {
+    requests.push(
+      request(app)
+        .post("/shorten")
+        .send({ url: test_url })
+        .set("Authorization", api_key)
+        .set("Accept", "application/json")
+    );
+  }
+
+  const responses = await Promise.all(requests);
+
+  const tooManyRequests = responses.filter((res) => res.statusCode === 429);
+
+  expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
+  expect(tooManyRequests[0].body).toHaveProperty(
+    "error",
+    "Too many requests. Please try again later."
+  );
+});
+
+//ip rate limit for /redirect
+
+test("/redirect should allow up to 50 requests", async () => {
+  const ip = "123.123.123.123";
 
   await prisma.url_shortener.create({
     data: {
@@ -812,22 +907,20 @@ test("should allow up to 100 requests", async()=>{
     },
   });
 
-
-  for(let i=0;i<99;i++){
-    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+  for (let i = 0; i < 49; i++) {
+    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For", ip);
   }
-  
-  const res = await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+
+  const res = await request(app)
+    .get("/redirect?code=yoDhDo")
+    .set("X-Forwarded-For", ip);
 
   expect(res.statusCode).toBe(302);
   expect(res.headers.location).toBe("https://example.com/");
+});
 
-})
-
-
-test("should block ip after 100 requests", async()=>{
-  
-  const ip = "123.123.123.123"
+test("/redirect should block ip after 50 requests", async () => {
+  const ip = "123.123.123.123";
 
   await prisma.url_shortener.create({
     data: {
@@ -836,14 +929,17 @@ test("should block ip after 100 requests", async()=>{
     },
   });
 
-
-  for(let i=0;i<100;i++){
-    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+  for (let i = 0; i < 50; i++) {
+    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For", ip);
   }
-  
-  const res = await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For",ip)
+
+  const res = await request(app)
+    .get("/redirect?code=yoDhDo")
+    .set("X-Forwarded-For", ip);
 
   expect(res.statusCode).toBe(429);
-  expect(res.body).toHaveProperty("error","Too many requests. Try again later.");
-
-})
+  expect(res.body).toHaveProperty(
+    "error",
+    "Too many requests. Try again later."
+  );
+});
