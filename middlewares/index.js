@@ -8,6 +8,7 @@ const requestTimeMiddleware = require("./requestTimeMiddleware")
 const responseTimeMiddleware = require("./responseTimeMiddleware")
 const sentryMiddleware = require("./sentryMiddleware")
 const apiKeyRateLimiter = require("./apiKeyRateLimiter")
+const tierRateLimiter = require("./tierRateLimiter")
 
 module.exports = {
     checkEnterpricePlanMiddleware,
@@ -19,5 +20,6 @@ module.exports = {
     responseTimeMiddleware,
     sentryMiddleware,
     checkRateLimiter,
-    apiKeyRateLimiter
+    apiKeyRateLimiter,
+    tierRateLimiter
 }

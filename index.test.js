@@ -845,57 +845,57 @@ test("/health should return 500 with failure", async () => {
 
 // })
 
-//API Rate limiting
-test("/shorten should allow up to 10 requests per second", async () => {
-  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
-  const test_url = "https://example.com/";
+//API Rate limiting to tier rate limiting so keeping it here for sometime
+// test("/shorten should allow up to 10 requests per second", async () => {
+//   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+//   const test_url = "https://example.com/";
 
-  for (let i = 0; i < 9; i++) {
-    await request(app)
-      .post("/shorten")
-      .send({ url: test_url })
-      .set("Authorization", api_key)
-      .set("Accept", "application/json");
-  }
-  const res = await request(app)
-    .post("/shorten")
-    .send({ url: test_url })
-    .set("Authorization", api_key)
-    .set("Accept", "application/json");
+//   for (let i = 0; i < 9; i++) {
+//     await request(app)
+//       .post("/shorten")
+//       .send({ url: test_url })
+//       .set("Authorization", api_key)
+//       .set("Accept", "application/json");
+//   }
+//   const res = await request(app)
+//     .post("/shorten")
+//     .send({ url: test_url })
+//     .set("Authorization", api_key)
+//     .set("Accept", "application/json");
 
-  expect(res.statusCode).toBe(200);
-  expect(res.body).toHaveProperty("status", "shortcode stored");
-  expect(res.body).toHaveProperty("short_url");
-});
+//   expect(res.statusCode).toBe(200);
+//   expect(res.body).toHaveProperty("status", "shortcode stored");
+//   expect(res.body).toHaveProperty("short_url");
+// });
 
-test("/shorten should stop more than 10 requests per second", async () => {
-  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
-  const test_url = "https://example.com/";
+// test("/shorten should stop more than 10 requests per second", async () => {
+//   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+//   const test_url = "https://example.com/";
 
-  const requests = [];
+//   const requests = [];
 
-  for (let i = 0; i < 11; i++) {
-    requests.push(
-      request(app)
-        .post("/shorten")
-        .send({ url: test_url })
-        .set("Authorization", api_key)
-        .set("Accept", "application/json")
-    );
-  }
+//   for (let i = 0; i < 11; i++) {
+//     requests.push(
+//       request(app)
+//         .post("/shorten")
+//         .send({ url: test_url })
+//         .set("Authorization", api_key)
+//         .set("Accept", "application/json")
+//     );
+//   }
 
-  const responses = await Promise.all(requests);
+//   const responses = await Promise.all(requests);
 
-  const tooManyRequests = responses.filter((res) => res.statusCode === 429);
+//   const tooManyRequests = responses.filter((res) => res.statusCode === 429);
 
-  expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
-  expect(tooManyRequests[0].body).toHaveProperty(
-    "error",
-    "Too many requests. Please try again later."
-  );
-});
+//   expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
+//   expect(tooManyRequests[0].body).toHaveProperty(
+//     "error",
+//     "Too many requests. Please try again later."
+//   );
+// });
 
-//ip rate limit for /redirect
+//ip rate limit for /redirect  
 
 test("/redirect should allow up to 50 requests", async () => {
   const ip = "123.123.123.123";
@@ -929,17 +929,69 @@ test("/redirect should block ip after 50 requests", async () => {
     },
   });
 
-  for (let i = 0; i < 50; i++) {
-    await request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For", ip);
+  const requests = []
+
+  for (let i = 0; i < 51; i++) {
+     requests.push(request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For", ip))
   }
 
-  const res = await request(app)
-    .get("/redirect?code=yoDhDo")
-    .set("X-Forwarded-For", ip);
+    const responses = await Promise.all(requests);
 
-  expect(res.statusCode).toBe(429);
-  expect(res.body).toHaveProperty(
+    const tooManyRequests = responses.filter((res) => res.statusCode === 429);
+  
+    expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
+    expect(tooManyRequests[0].body).toHaveProperty(
+      "error",
+      "Too many requests. Try again later."
+    );
+});
+
+//t tier limiting
+test("/shorten should allow up 5 requests  per 60 second", async () => {
+  const api_key = "5b67a2e9f8d34c5e9b10d7c6f3a4d1b2";
+  const test_url = "https://example.com/";
+
+  for (let i = 0; i < 4; i++) {
+    await request(app)
+      .post("/shorten")
+      .send({ url: test_url })
+      .set("Authorization", api_key)
+      .set("Accept", "application/json");
+  }
+  const res = await request(app)
+    .post("/shorten")
+    .send({ url: test_url })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty("status", "shortcode stored");
+  expect(res.body).toHaveProperty("short_url");
+});
+
+test("/shorten should stop more than 5 requests per 60 second", async () => {
+  const api_key = "5b67a2e9f8d34c5e9b10d7c6f3a4d1b2";
+  const test_url = "https://example.com/";
+
+  const requests = [];
+
+  for (let i = 0; i < 6; i++) {
+    requests.push(
+      request(app)
+        .post("/shorten")
+        .send({ url: test_url })
+        .set("Authorization", api_key)
+        .set("Accept", "application/json")
+    );
+  }
+
+  const responses = await Promise.all(requests);
+
+  const tooManyRequests = responses.filter((res) => res.statusCode === 429);
+
+  expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
+  expect(tooManyRequests[0].body).toHaveProperty(
     "error",
-    "Too many requests. Try again later."
+    "Too many requests. Please try again later."
   );
 });

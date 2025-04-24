@@ -22,6 +22,7 @@ model url_shortener {
 }
 
 enum Tier {
+  free
   hobby
   enterprise
 }

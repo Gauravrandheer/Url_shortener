@@ -20,7 +20,8 @@ const {
   responseTimeMiddleware,
   sentryMiddleware,
   checkRateLimiter,
-  apiKeyRateLimiter
+  apiKeyRateLimiter,
+  tierRateLimiter
 } = require("./middlewares");
 
 const redisClient = require("./cache");
@@ -28,7 +29,7 @@ const { updateCached, getCached, isExpiredfunc } = require("./utils/cacheHelper"
 
 //middleware used
 // app.use(checkRateLimiter) switch to api key Rate limiter
-app.use("/shorten",apiKeyRateLimiter(10, "/shorten"));
+// app.use("/shorten",apiKeyRateLimiter(10, "/shorten"));
 app.use("/redirect",checkRateLimiter(50));
 app.use(sentryMiddleware);
 app.use(requestTimeMiddleware);
@@ -157,7 +158,7 @@ app.get("/cacheHitRatio", async (req, res) => {
 });
 
 // Shorten YYYY-MM-DD
-app.post("/shorten", logMiddleware, isValidApiKey, async (req, res) => {
+app.post("/shorten", logMiddleware, isValidApiKey,tierRateLimiter, async (req, res) => {
   let row = req.user;
   let long_url = req.body.url;
   let password = req.body.password;
