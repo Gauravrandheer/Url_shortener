@@ -1012,3 +1012,29 @@ test("/shorten should stop more than 5 requests per 60 second", async () => {
     "Too many requests. Please try again later."
   );
 });
+
+test("/shorten should allow 3 requests as well as send ratelimit-limit ,remaining and resettime", async () => {
+  const api_key = "5b67a2e9f8d34c5e9b10d7c6f3a4d1b2";
+  const test_url = "https://example.com/";
+
+  for (let i = 0; i < 2; i++) {
+    await request(app)
+      .post("/shorten")
+      .send({ url: test_url })
+      .set("Authorization", api_key)
+      .set("Accept", "application/json");
+  }
+  const res = await request(app)
+    .post("/shorten")
+    .send({ url: test_url })
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res.statusCode).toBe(200);
+  expect(res.header).toHaveProperty("x-ratelimit-limit");
+  expect(res.header).toHaveProperty("x-ratelimit-remaining");
+  expect(res.header).toHaveProperty("x-ratelimit-reset");
+  expect(Number(res.header["x-ratelimit-limit"])).toBe(5);
+  expect(Number(res.header["x-ratelimit-remaining"])).toBe(2);
+  expect(Number(res.header["x-ratelimit-reset"])).toBeGreaterThanOrEqual(Math.floor(Date.now()/1000));
+});
