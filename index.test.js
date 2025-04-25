@@ -5,14 +5,31 @@ const prisma = require("./prismaClient");
 const app = require("./index");
 const { status } = require("express/lib/response");
 const redisClient = require("./cache");
+// jest.setTimeout(30000);
+
+beforeAll(async () => {
+  if (!redisClient.isOpen) {
+    await redisClient.connect();
+  }
+  console.log("🟢 Redis isOpen:", redisClient.isOpen); // should be true
+});
 
 beforeEach(async () => {
   await prisma.url_shortener.deleteMany();
-  await redisClient.flushDb();
+  try {
+    if (redisClient.isOpen) {
+      await redisClient.flushDb();
+    }
+  } catch (err) {
+    console.error("Redis flushDb failed:", err);
+  }
 });
+
 afterAll(async () => {
   await redisClient.quit();
 });
+
+
 test("Post /shorten api should store generated shortcode with valid api key with expired date with no password", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
