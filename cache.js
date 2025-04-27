@@ -1,10 +1,20 @@
-const redis = require("redis");
 
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL,
-});
+let redisClient;
 
-redisClient
+if (process.env.USE_UPSTASH === "true") {
+  const { Redis } = require("@upstash/redis");
+  redisClient = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+  console.log("Using Upstash Redis");
+} else {
+  const redis = require("redis");
+  redisClient = redis.createClient({
+    url: process.env.REDIS_URL,
+  });
+
+  redisClient
   .connect()
   .then(async () => {
     console.log("Redis connected!!");
@@ -20,5 +30,12 @@ redisClient
     }
   })
   .catch((err) => console.error("Redis Connection Error", err));
+ 
+}
+
+
+
+
+
 
 module.exports = redisClient;
