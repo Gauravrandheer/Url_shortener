@@ -31,7 +31,7 @@ const { updateCached, getCached, isExpiredfunc } = require("./utils/cacheHelper"
 // app.use(checkRateLimiter) switch to api key Rate limiter
 // app.use("/shorten",apiKeyRateLimiter(10, "/shorten"));
 app.use("/redirect",checkRateLimiter(50));
-app.use(sentryMiddleware);
+// app.use(sentryMiddleware);
 app.use(requestTimeMiddleware);
 app.use(express.json());
 // app.use(logMiddleware);
@@ -388,7 +388,7 @@ app.get("/health", logMiddleware, async (req, res) => {
   }
 });
 
-app.use(sentryMiddleware);
+// app.use(sentryMiddleware);
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running at ${BASE_URL}:${port}`);

@@ -3,6 +3,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2025-04-25
+
+### Added
+- Added ip rate limiting for public url.
+- Added tie rate limiting for user plans.
+- Added rate-limiter-header for client to improve more transparency.
+
+### Updated
+ - Updated eviction policy from LRU to LFU.
+
+## [0.8.0] - 2025-04-12
+
+### Added
+- Added redis to improve response time.
+
+### Removed
+ - Removed in memory cache.
+
 ## [0.7.0] - 2025-04-07
 
 ### Added
