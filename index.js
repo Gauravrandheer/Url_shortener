@@ -21,16 +21,20 @@ const {
   sentryMiddleware,
   checkRateLimiter,
   apiKeyRateLimiter,
-  tierRateLimiter
+  tierRateLimiter,
 } = require("./middlewares");
 
 const redisClient = require("./cache");
-const { updateCached, getCached, isExpiredfunc } = require("./utils/cacheHelper");
+const {
+  updateCached,
+  getCached,
+  isExpiredfunc,
+} = require("./utils/cacheHelper");
 
 //middleware used
 // app.use(checkRateLimiter) switch to api key Rate limiter
 // app.use("/shorten",apiKeyRateLimiter(10, "/shorten"));
-app.use("/redirect",checkRateLimiter(50));
+app.use("/redirect", checkRateLimiter(50));
 // app.use(sentryMiddleware);
 app.use(requestTimeMiddleware);
 app.use(express.json());
@@ -73,7 +77,7 @@ app.get(
       return res.status(400).json({ error: "Missing code parameter" });
     }
 
-    let cachedData = await getCached(redisClient,code);
+    let cachedData = await getCached(redisClient, code);
 
     if (enableCache && cachedData) {
       cachedData = JSON.parse(cachedData);
@@ -86,7 +90,7 @@ app.get(
           });
       }
 
-      const isExpired = isExpiredfunc(cachedData)
+      const isExpired = isExpiredfunc(cachedData);
 
       if (isExpired) {
         return res.status(404).json({ error: "short_code is expired" });
@@ -112,7 +116,7 @@ app.get(
     }
 
     if (row) {
-      const isExpired = isExpiredfunc(row)
+      const isExpired = isExpiredfunc(row);
 
       if (isExpired) {
         return res.status(404).json({ error: "short_code is expired" });
@@ -131,7 +135,7 @@ app.get(
       });
 
       if (enableCache) {
-        await updateCached(redisClient,code,row)
+        await updateCached(redisClient, code, row);
         res.set("x-Cache-Status", "MISS");
         res.set("Cache-Control", "public,max-age=86400");
       }
@@ -158,52 +162,58 @@ app.get("/cacheHitRatio", async (req, res) => {
 });
 
 // Shorten YYYY-MM-DD
-app.post("/shorten", logMiddleware, isValidApiKey,tierRateLimiter, async (req, res) => {
-  let row = req.user;
-  let long_url = req.body.url;
-  let password = req.body.password;
-  let expired_date = req.body.expired_date;
-  let custom_code = req.body.custom_code;
+app.post(
+  "/shorten",
+  logMiddleware,
+  isValidApiKey,
+  tierRateLimiter,
+  async (req, res) => {
+    let row = req.user;
+    let long_url = req.body.url;
+    let password = req.body.password;
+    let expired_date = req.body.expired_date;
+    let custom_code = req.body.custom_code;
 
-  if (!long_url) {
-    return res.status(400).json({ error: "Url is required" });
-  }
+    if (!long_url) {
+      return res.status(400).json({ error: "Url is required" });
+    }
 
-  let finalpassword = password ? password : null;
+    let finalpassword = password ? password : null;
 
-  const short_code = generateShortCode();
-  const our_short_code =
-    custom_code?.trim().length > 0 ? custom_code.trim() : short_code;
-  if (!expired_date) {
-    await prisma.url_shortener.create({
-      data: {
-        short_code: our_short_code,
-        original_url: long_url,
-        user_id: row.id,
-        password: finalpassword,
-      },
+    const short_code = generateShortCode();
+    const our_short_code =
+      custom_code?.trim().length > 0 ? custom_code.trim() : short_code;
+    if (!expired_date) {
+      await prisma.url_shortener.create({
+        data: {
+          short_code: our_short_code,
+          original_url: long_url,
+          user_id: row.id,
+          password: finalpassword,
+        },
+      });
+    } else {
+      let expiredDate = new Date(expired_date);
+
+      await prisma.url_shortener.create({
+        data: {
+          short_code: our_short_code,
+          original_url: long_url,
+          user_id: row.id,
+          expired_at: expiredDate,
+          password: finalpassword,
+        },
+      });
+    }
+
+    const my_short_url = `${BASE_URL}/redirect?code=${our_short_code}`;
+
+    return res.status(200).json({
+      status: "shortcode stored",
+      short_url: my_short_url,
     });
-  } else {
-    let expiredDate = new Date(expired_date);
-
-    await prisma.url_shortener.create({
-      data: {
-        short_code: our_short_code,
-        original_url: long_url,
-        user_id: row.id,
-        expired_at: expiredDate,
-        password: finalpassword,
-      },
-    });
   }
-
-  const my_short_url = `${BASE_URL}/redirect?code=${our_short_code}`;
-
-  return res.status(200).json({
-    status: "shortcode stored",
-    short_url: my_short_url,
-  });
-});
+);
 
 app.post(
   "/shorten-bulk",
@@ -307,7 +317,7 @@ app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
       password: new_password || row.password,
     };
 
-   const updatedRow =  await prisma.url_shortener.update({
+    const updatedRow = await prisma.url_shortener.update({
       where: {
         short_code: short_code,
         user_id: user.id,
@@ -317,7 +327,7 @@ app.patch("/shorten/edit", isValidApiKey, async (req, res) => {
     });
 
     if (enableCache) {
-      await updateCached(redisClient,short_code,updatedRow)
+      await updateCached(redisClient, short_code, updatedRow);
     }
 
     return res.status(200).json({ status: "status updated succesfully" });
@@ -361,12 +371,34 @@ app.delete("/shorten/:code", isValidApiKey, async (req, res) => {
 app.get("/user/urls", isValidApiKey, isUserBlacklisted, async (req, res) => {
   try {
     const user = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+   
+
+    if (page <= 0 || limit <= 0) {
+      return res.status(400).json({ error: "Invalid page or limit" });
+    }
+
+    const skip = (page - 1) * limit;
 
     const urls = await prisma.url_shortener.findMany({
       where: { user_id: user.id, deleted_at: null },
+      skip: skip,
+      take: limit,
+      orderBy: [{ created_at: "desc" }, { id: "desc" }],
     });
 
-    return res.status(200).json({ urls });
+    const totalCount = await prisma.url_shortener.count({
+      where: {
+        user_id: user.id,
+        deleted_at: null,
+      },
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+  
+    return res.status(200).json({ page, limit, totalCount, totalPages, urls });
   } catch (error) {
     return res.status(500).json({ error: "Internal server error" });
   }

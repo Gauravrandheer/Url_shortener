@@ -29,7 +29,6 @@ afterAll(async () => {
   await redisClient.quit();
 });
 
-
 test("Post /shorten api should store generated shortcode with valid api key with expired date with no password", async () => {
   const test_url = "https://example.com/";
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
@@ -729,23 +728,43 @@ test("/shorten/edit should give fail if Shortcode not found for user or does not
   );
 });
 
-test("/user/urls should return all URLs for a user", async () => {
+test("/user/urls should return all URLs for a user with pagination working", async () => {
   const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
 
-  await prisma.url_shortener.createMany({
-    data: [
-      { short_code: "abc123", original_url: "https://example.com", user_id: 1 },
-      { short_code: "xyz456", original_url: "https://google.com", user_id: 1 },
-    ],
-  });
+  const urlsToCreate = Array.from({ length: 15 }, (_, i) => ({
+    short_code: `code${i + 1}`,
+    original_url: `https://example${i + 1}.com`,
+    user_id: 1,
+    created_at: new Date(Date.now() + i),
+  }));
 
-  const res = await request(app)
-    .get("/user/urls")
+ await prisma.url_shortener.createMany({ data: urlsToCreate });
+
+  const res1 = await request(app)
+    .get("/user/urls?page=1&limit=5")
     .set("Authorization", api_key)
     .set("Accept", "application/json");
 
-  expect(res.statusCode).toBe(200);
-  expect(res.body.urls).toHaveLength(2);
+  expect(res1.statusCode).toBe(200);
+  expect(res1.body.urls).toHaveLength(5);
+  expect(res1.body.page).toBe(1);
+  expect(res1.body.limit).toBe(5);
+  expect(res1.body.totalCount).toBe(15);
+  expect(res1.body.totalPages).toBe(3);
+
+  const res2 = await request(app)
+    .get("/user/urls?page=2&limit=5")
+    .set("Authorization", api_key)
+    .set("Accept", "application/json");
+
+  expect(res1.statusCode).toBe(200);
+  expect(res1.body.urls).toHaveLength(5);
+  expect(res1.body.page).toBe(1);
+  expect(res1.body.limit).toBe(5);
+
+  expect(res1.body.urls[0].short_code).not.toEqual(
+    res2.body.urls[0].short_code
+  );
 });
 
 test("/user/urls should fall with no API key", async () => {
@@ -912,7 +931,7 @@ test("/health should return 500 with failure", async () => {
 //   );
 // });
 
-//ip rate limit for /redirect  
+//ip rate limit for /redirect
 
 test("/redirect should allow up to 50 requests", async () => {
   const ip = "123.123.123.123";
@@ -946,21 +965,23 @@ test("/redirect should block ip after 50 requests", async () => {
     },
   });
 
-  const requests = []
+  const requests = [];
 
   for (let i = 0; i < 51; i++) {
-     requests.push(request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For", ip))
+    requests.push(
+      request(app).get("/redirect?code=yoDhDo").set("X-Forwarded-For", ip)
+    );
   }
 
-    const responses = await Promise.all(requests);
+  const responses = await Promise.all(requests);
 
-    const tooManyRequests = responses.filter((res) => res.statusCode === 429);
-  
-    expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
-    expect(tooManyRequests[0].body).toHaveProperty(
-      "error",
-      "Too many requests. Try again later."
-    );
+  const tooManyRequests = responses.filter((res) => res.statusCode === 429);
+
+  expect(tooManyRequests.length).toBeGreaterThanOrEqual(1);
+  expect(tooManyRequests[0].body).toHaveProperty(
+    "error",
+    "Too many requests. Try again later."
+  );
 });
 
 //t tier limiting
@@ -1036,5 +1057,7 @@ test("/shorten should allow 3 requests as well as send ratelimit-limit ,remainin
   expect(res.header).toHaveProperty("x-ratelimit-reset");
   expect(Number(res.header["x-ratelimit-limit"])).toBe(5);
   expect(Number(res.header["x-ratelimit-remaining"])).toBe(2);
-  expect(Number(res.header["x-ratelimit-reset"])).toBeGreaterThanOrEqual(Math.floor(Date.now()/1000));
+  expect(Number(res.header["x-ratelimit-reset"])).toBeGreaterThanOrEqual(
+    Math.floor(Date.now() / 1000)
+  );
 });
