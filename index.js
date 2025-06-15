@@ -7,6 +7,7 @@ const Sentry = require("@sentry/node");
 const { status } = require("express/lib/response");
 const { error } = require("console");
 const prisma = require("./prismaClient");
+const {prismaRetry} = require("./utils/errorRetry")
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -382,19 +383,20 @@ app.get("/user/urls", isValidApiKey, isUserBlacklisted, async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const urls = await prisma.url_shortener.findMany({
+    const urls = await prismaRetry(()=> prisma.url_shortener.findMany({
       where: { user_id: user.id, deleted_at: null },
       skip: skip,
       take: limit,
       orderBy: [{ created_at: "desc" }, { id: "desc" }],
-    });
+    }))
 
-    const totalCount = await prisma.url_shortener.count({
+  
+    const totalCount = await prismaRetry(() => prisma.url_shortener.count({
       where: {
         user_id: user.id,
         deleted_at: null,
       },
-    });
+    }))
 
     const totalPages = Math.ceil(totalCount / limit);
   

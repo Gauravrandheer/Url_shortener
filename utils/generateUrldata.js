@@ -5,7 +5,7 @@ const { nanoid } = require("nanoid");
 
 
 const batchSize = 1000
-const TotalRecords = 1000000
+const TotalRecords = 100000
 
 function generateMockData(batchSize) {
   const data = [];
@@ -13,7 +13,7 @@ function generateMockData(batchSize) {
   for (let i = 0; i < 10000; i++) {
     data.push({
       short_code: nanoid(6),
-      original_url: `https://example.com/${i}`,
+      original_url: `https://example1.com/${i}`,
       user_id: 1,
       expired_at: null,
       password: null,

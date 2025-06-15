@@ -812,6 +812,38 @@ test("/user/urls should fall with file not opening", async () => {
   expect(res.body).toHaveProperty("error", "Internal Server error");
   jest.restoreAllMocks();
 });
+
+test("/user/urls retries transient errors", async () => {
+  const api_key = "8f32e5a9d2c74b56a1d98c4e57f6e2bc";
+
+  const originalFindMany = prisma.url_shortener.findMany; 
+  let callCount = 0;
+
+ 
+  prisma.url_shortener.findMany = jest.fn(async () => {
+    callCount++;
+    if (callCount < 3) {
+      throw new Error("Temporary DB failure"); 
+    }
+    return [
+      {
+        id: 1,
+        short_code: "abc123",
+        original_url: "https://example.com",
+      },
+    ];
+  });
+
+
+  const res = await request(app)
+    .get("/user/urls")
+    .set("Authorization", api_key);
+
+  expect(res.statusCode).toBe(200);
+  expect(callCount).toBe(3);
+  prisma.url_shortener.findMany = originalFindMany;
+});
+
 test("/health should return 200 with success", async () => {
   const res = await request(app).get("/health");
 
